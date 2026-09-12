@@ -40,8 +40,11 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
 2. Embeddings pipeline (pgvector + Gemini) for pattern-learning / semantic search.
 3. Google OAuth connection flow (Gmail + Calendar).
 4. AssemblyAI voice capture wiring.
-5. Twilio calling — phone number provisioning, webhook-based call recording + transcription
-   (per the `/blueprint` doc's recommended "post-call webhook" approach, not live streaming).
+5. Twilio calling — **deferred until there's a real paying customer** (Twilio's 30-day trial
+   genuinely expires; post-trial billing is usage-based/pay-as-you-go with no forced
+   subscription, but Anwar chose to hold off rather than add a card with no revenue yet). When
+   revisited: phone number provisioning, webhook-based call recording + transcription per the
+   `/blueprint` doc's recommended "post-call webhook" approach, not live streaming.
 6. Additional schema from `/blueprint`: `leads`, `interactions`, `strategies`, `outcomes`, `tags`.
 
 ## Your Part

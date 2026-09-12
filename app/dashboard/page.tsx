@@ -48,11 +48,16 @@ export default async function DashboardPage() {
       </p>
 
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6 max-w-2xl">
-        <p className="text-zinc-400">
+        <p className="text-zinc-400 mb-4">
           This is the real application shell — account creation, login, and
-          multi-tenant company setup are live. Data upload, voice capture, and
-          pattern learning land here next.
+          multi-tenant company setup are live. Real file upload is live too.
         </p>
+        <a
+          href="/dashboard/upload"
+          className="inline-block rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2"
+        >
+          Upload documents →
+        </a>
       </div>
 
       <form action="/auth/signout" method="post" className="mt-8">
