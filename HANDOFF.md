@@ -48,18 +48,25 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
   `GEMINI_API_KEY` is a **Supabase Edge Function secret**, not a Vercel env var — the frontend
   never touches it directly, same pattern as the demo project.
 
-## Not built yet (next up)
-1. Google OAuth connection flow (Gmail + Calendar) — credentials staged as Vercel env vars,
-   flow itself not built.
-2. Semantic search / chat UI that actually queries `match_document_chunks` (the backend RPC
-   exists and works, just no frontend for it yet).
-3. Twilio calling — **deferred until there's a real paying customer** (Twilio's 30-day trial
-   genuinely expires; post-trial billing is usage-based/pay-as-you-go with no forced
-   subscription, but Anwar chose to hold off rather than add a card with no revenue yet). When
-   revisited: phone number provisioning, webhook-based call recording + transcription per the
-   `/blueprint` doc's recommended "post-call webhook" approach, not live streaming.
-4. AssemblyAI voice capture wiring (key is staged, not yet used anywhere).
-5. Additional schema from `/blueprint`: `leads`, `interactions`, `strategies`, `outcomes`, `tags`.
+## Master roadmap (phases)
+1. **Foundation** — DONE. Auth, multi-tenancy, file upload, embeddings/semantic search.
+2. **Core data model** — leads, interactions, strategies, outcomes, tags tables per the
+   `/blueprint` schema, company+department scoped.
+3. **Data Capture: manual notes** — real version of the demo's "Type a Note," text-only for
+   now, feeds the same extraction/embedding pipeline as documents.
+4. **AI Workspace (grounded chat)** — real chat UI querying `match_document_chunks` +
+   interactions.
+5. **Decision Memory, Timeline, Knowledge Graph** — UI views over the interactions data.
+6. **Real voice capture (AssemblyAI)** — wire up the already-provided key; voice becomes
+   primary input per the product's voice-first principle.
+7. **Admin & Access + Google integration** — user directory, clearance tiers, Gmail/Calendar
+   OAuth flow using already-staged credentials.
+8. **Insights & Analytics** — real dashboards, deferred until there's enough real usage data.
+9. **Contribution & Rewards** — contribution scoring + six-month report to founder.
+10. **Strategy Advisor** — AI recommendations from accumulated data.
+11. **Telephony (Twilio)** — deferred until a paying customer exists.
+
+Not yet built: everything from Phase 2 onward.
 
 ## Your Part
 - Create the GitHub repo (or give Claude a PAT to create/push to one) — suggested name
