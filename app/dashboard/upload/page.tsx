@@ -52,7 +52,15 @@ export default function UploadPage() {
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !companyId || !userId) return;
+    if (!file) return;
+
+    if (!companyId || !userId) {
+      setErrorMsg(
+        "Your account isn't fully set up yet. Please visit the Dashboard page first, then come back here."
+      );
+      e.target.value = "";
+      return;
+    }
 
     setUploading(true);
     setErrorMsg("");

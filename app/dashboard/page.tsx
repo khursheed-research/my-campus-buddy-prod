@@ -22,11 +22,24 @@ export default async function DashboardPage() {
     const companyName =
       (user.user_metadata?.company_name as string | undefined) || "My Organization";
 
-    const { data: company } = await supabase
+    const { data: company, error: companyError } = await supabase
       .from("companies")
       .insert({ name: companyName })
       .select("id")
       .single();
+
+    if (companyError) {
+      return (
+        <main className="min-h-screen p-8">
+          <p className="text-red-400">
+            Couldn&apos;t finish setting up your account: {companyError.message}
+          </p>
+          <p className="text-zinc-500 mt-2">
+            Please refresh this page. If this keeps happening, contact support.
+          </p>
+        </main>
+      );
+    }
 
     if (company) {
       await supabase
