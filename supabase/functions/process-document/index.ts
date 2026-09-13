@@ -105,6 +105,9 @@ Deno.serve(async (req) => {
     const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     await adminClient.from("documents").update({ status: "processing" }).eq("id", document_id);
+    // Clear any prior chunks first, so a retry or accidental double-invoke
+    // can never leave duplicate embeddings behind.
+    await adminClient.from("document_chunks").delete().eq("document_id", document_id);
 
     const { data: fileBlob, error: downloadError } = await adminClient.storage
       .from("documents")
