@@ -50,6 +50,16 @@ export default function UploadPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!companyId) return;
+    const stillWorking = docs.some((d) => d.status === "uploaded" || d.status === "processing");
+    if (!stillWorking) return;
+
+    const interval = setInterval(() => loadDocs(companyId), 3000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docs, companyId]);
+
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -77,18 +87,31 @@ export default function UploadPage() {
       return;
     }
 
-    const { error: insertError } = await supabase.from("documents").insert({
-      company_id: companyId,
-      uploaded_by: userId,
-      storage_path: path,
-      file_name: file.name,
-      mime_type: file.type || null,
-      size_bytes: file.size,
-    });
+    const { data: insertedDoc, error: insertError } = await supabase
+      .from("documents")
+      .insert({
+        company_id: companyId,
+        uploaded_by: userId,
+        storage_path: path,
+        file_name: file.name,
+        mime_type: file.type || null,
+        size_bytes: file.size,
+      })
+      .select("id")
+      .single();
 
     if (insertError) {
       setErrorMsg(insertError.message);
+      setUploading(false);
+      return;
     }
+
+    // Fire-and-forget: kicks off real text extraction + embedding in the
+    // background. The document list below shows status as it progresses
+    // (uploaded -> processing -> processed) on next refresh.
+    supabase.functions.invoke("process-document", {
+      body: { document_id: insertedDoc.id },
+    });
 
     setUploading(false);
     e.target.value = "";

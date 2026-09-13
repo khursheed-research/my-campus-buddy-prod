@@ -31,21 +31,35 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
 - `app/dashboard` — first real authenticated page. On first login, provisions a `companies` row
   from the signup's company name and links the user's `profiles` row to it as `admin` /
   `executive` clearance (matches the /blueprint doc's role model).
-- `supabase/migrations/0001_init_auth_and_tenancy.sql` — `companies` + `profiles` tables, RLS
-  scoped by `company_id`, auto-profile-creation trigger on signup. Already applied to the live
-  Supabase project.
+- `app/dashboard/upload` — real file upload → Supabase Storage (private, RLS-scoped per
+  company). On upload, calls the `process-document` Edge Function to kick off real text
+  extraction + embedding in the background; the page polls and shows live status
+  (uploaded → processing → processed/error).
+- `supabase/functions/process-document` — downloads the real uploaded file, extracts real text
+  (PDF via `unpdf`, plain text/markdown via direct decode), splits it into ~1200-character
+  overlapping chunks, embeds each chunk with Gemini's `text-embedding-004` (768 dimensions),
+  and stores them in `document_chunks`. Uses the service-role key for the actual writes
+  (outside RLS reach for regular users by design), but first checks the caller's own JWT can
+  see the document at all (enforces company scoping before doing any real work).
+- `supabase/migrations/0003_document_chunks_and_embeddings.sql` — `document_chunks` table
+  (pgvector `vector(768)` column, HNSW cosine index), RLS scoped by `company_id`, and a
+  `match_document_chunks(query_embedding, match_count)` RPC for real semantic search — scoped
+  to the caller's own company inside the function itself, not just via RLS on the table.
+  `GEMINI_API_KEY` is a **Supabase Edge Function secret**, not a Vercel env var — the frontend
+  never touches it directly, same pattern as the demo project.
 
 ## Not built yet (next up)
-1. Real file/document upload → Supabase Storage, tagged by `company_id`.
-2. Embeddings pipeline (pgvector + Gemini) for pattern-learning / semantic search.
-3. Google OAuth connection flow (Gmail + Calendar).
-4. AssemblyAI voice capture wiring.
-5. Twilio calling — **deferred until there's a real paying customer** (Twilio's 30-day trial
+1. Google OAuth connection flow (Gmail + Calendar) — credentials staged as Vercel env vars,
+   flow itself not built.
+2. Semantic search / chat UI that actually queries `match_document_chunks` (the backend RPC
+   exists and works, just no frontend for it yet).
+3. Twilio calling — **deferred until there's a real paying customer** (Twilio's 30-day trial
    genuinely expires; post-trial billing is usage-based/pay-as-you-go with no forced
    subscription, but Anwar chose to hold off rather than add a card with no revenue yet). When
    revisited: phone number provisioning, webhook-based call recording + transcription per the
    `/blueprint` doc's recommended "post-call webhook" approach, not live streaming.
-6. Additional schema from `/blueprint`: `leads`, `interactions`, `strategies`, `outcomes`, `tags`.
+4. AssemblyAI voice capture wiring (key is staged, not yet used anywhere).
+5. Additional schema from `/blueprint`: `leads`, `interactions`, `strategies`, `outcomes`, `tags`.
 
 ## Your Part
 - Create the GitHub repo (or give Claude a PAT to create/push to one) — suggested name
