@@ -30,14 +30,15 @@ function chunkText(text: string): string[] {
 
 async function embedBatch(texts: string[]): Promise<number[][]> {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents?key=${GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         requests: texts.map((text) => ({
-          model: "models/text-embedding-004",
+          model: "models/gemini-embedding-001",
           content: { parts: [{ text }] },
+          outputDimensionality: 768,
         })),
       }),
     }
@@ -52,16 +53,31 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
   return data.embeddings.map((e: { values: number[] }) => e.values);
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing auth" }), { status: 401 });
+      return new Response(JSON.stringify({ error: "Missing auth" }), {
+        status: 401,
+        headers: corsHeaders,
+      });
     }
 
     const { document_id } = await req.json();
     if (!document_id) {
-      return new Response(JSON.stringify({ error: "document_id required" }), { status: 400 });
+      return new Response(JSON.stringify({ error: "document_id required" }), {
+        status: 400,
+        headers: corsHeaders,
+      });
     }
 
     // Client scoped to the caller's own JWT: used only to confirm they can
@@ -79,6 +95,7 @@ Deno.serve(async (req) => {
     if (docError || !doc) {
       return new Response(JSON.stringify({ error: "Document not found or not accessible" }), {
         status: 404,
+        headers: corsHeaders,
       });
     }
 
@@ -95,7 +112,7 @@ Deno.serve(async (req) => {
 
     if (downloadError || !fileBlob) {
       await adminClient.from("documents").update({ status: "error" }).eq("id", document_id);
-      return new Response(JSON.stringify({ error: "Could not download file" }), { status: 500 });
+      return new Response(JSON.stringify({ error: "Could not download file" }), { status: 500, headers: corsHeaders });
     }
 
     const arrayBuffer = await fileBlob.arrayBuffer();
@@ -117,7 +134,7 @@ Deno.serve(async (req) => {
         .eq("id", document_id);
       return new Response(
         JSON.stringify({ error: "No extractable text found in this file" }),
-        { status: 422 }
+        { status: 422, headers: corsHeaders }
       );
     }
 
@@ -148,15 +165,15 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       await adminClient.from("documents").update({ status: "error" }).eq("id", document_id);
-      return new Response(JSON.stringify({ error: insertError.message }), { status: 500 });
+      return new Response(JSON.stringify({ error: insertError.message }), { status: 500, headers: corsHeaders });
     }
 
     await adminClient.from("documents").update({ status: "processed" }).eq("id", document_id);
 
     return new Response(JSON.stringify({ success: true, chunks: rows.length }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
+    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: corsHeaders });
   }
 });

@@ -60,6 +60,12 @@ export default function UploadPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docs, companyId]);
 
+  async function retryProcessing(docId: string) {
+    if (!companyId) return;
+    supabase.functions.invoke("process-document", { body: { document_id: docId } });
+    setTimeout(() => loadDocs(companyId), 1500);
+  }
+
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -153,9 +159,19 @@ export default function UploadPage() {
                 {new Date(d.created_at).toLocaleString()}
               </p>
             </div>
-            <span className="text-xs uppercase tracking-wide text-amber-500">
-              {d.status}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs uppercase tracking-wide text-amber-500">
+                {d.status}
+              </span>
+              {(d.status === "uploaded" || d.status === "error") && (
+                <button
+                  onClick={() => retryProcessing(d.id)}
+                  className="text-xs underline text-zinc-400 hover:text-amber-500"
+                >
+                  Retry
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
