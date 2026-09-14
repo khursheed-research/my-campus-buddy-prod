@@ -50,23 +50,22 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
 
 ## Master roadmap (phases)
 1. **Foundation** — DONE. Auth, multi-tenancy, file upload, embeddings/semantic search.
-2. **Core data model** — leads, interactions, strategies, outcomes, tags tables per the
-   `/blueprint` schema, company+department scoped.
-3. **Data Capture: manual notes** — real version of the demo's "Type a Note," text-only for
-   now, feeds the same extraction/embedding pipeline as documents.
-4. **AI Workspace (grounded chat)** — real chat UI querying `match_document_chunks` +
-   interactions.
-5. **Decision Memory, Timeline, Knowledge Graph** — UI views over the interactions data.
-6. **Real voice capture (AssemblyAI)** — wire up the already-provided key; voice becomes
-   primary input per the product's voice-first principle.
-7. **Admin & Access + Google integration** — user directory, clearance tiers, Gmail/Calendar
-   OAuth flow using already-staged credentials.
-8. **Insights & Analytics** — real dashboards, deferred until there's enough real usage data.
-9. **Contribution & Rewards** — contribution scoring + six-month report to founder.
-10. **Strategy Advisor** — AI recommendations from accumulated data.
-11. **Telephony (Twilio)** — deferred until a paying customer exists.
-
-Not yet built: everything from Phase 2 onward.
+2. **Core data model** — DONE. `leads`, `interactions`, `strategies`, `outcomes`, `tags` +
+   `tag_assignments` tables, all company-scoped RLS, indexed for Timeline/Insights queries.
+3. **Data Capture: manual notes** — DONE. `/dashboard/notes`: type a note, tagged by
+   department, auto-extracted (summary/sentiment/next_step via `gemini-3.5-flash-lite`) and
+   embedded (`gemini-embedding-001`) via the `process-interaction` Edge Function. Searchable
+   through `match_interactions` RPC (same pattern as `match_document_chunks`).
+4. **AI Workspace (grounded chat)** — NOT STARTED. Real chat UI querying
+   `match_document_chunks` + `match_interactions`.
+5. **Decision Memory, Timeline, Knowledge Graph** — NOT STARTED. UI views over the
+   interactions data.
+6. **Real voice capture (AssemblyAI)** — NOT STARTED. Key already provided.
+7. **Admin & Access + Google integration** — NOT STARTED. Credentials already staged.
+8. **Insights & Analytics** — NOT STARTED. Deferred until enough real usage data.
+9. **Contribution & Rewards** — NOT STARTED.
+10. **Strategy Advisor** — NOT STARTED.
+11. **Telephony (Twilio)** — DEFERRED until a paying customer exists.
 
 ## Your Part
 - Create the GitHub repo (or give Claude a PAT to create/push to one) — suggested name

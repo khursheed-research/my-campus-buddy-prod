@@ -67,9 +67,15 @@ export default async function DashboardPage() {
         </p>
         <a
           href="/dashboard/upload"
-          className="inline-block rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2"
+          className="inline-block rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2 mr-3"
         >
           Upload documents →
+        </a>
+        <a
+          href="/dashboard/notes"
+          className="inline-block rounded-md border border-amber-500 text-amber-500 text-sm font-medium px-4 py-2"
+        >
+          Notes →
         </a>
       </div>
 
