@@ -23,6 +23,8 @@ async function extractStructured(text: string) {
 - summary: 1-2 plain sentences capturing what happened or was decided
 - sentiment: exactly one of "positive", "neutral", "negative"
 - next_step: a short actionable next step if one is implied, otherwise null
+- is_decision: true if this note describes an actual decision being made or committed to (not just a discussion or observation), otherwise false
+- topics: an array of up to 5 short topic/entity strings mentioned (people, companies, products, subjects) — lowercase, 1-3 words each
 
 Note:
 """
@@ -44,8 +46,10 @@ ${text}
               summary: { type: "string" },
               sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
               next_step: { type: "string", nullable: true },
+              is_decision: { type: "boolean" },
+              topics: { type: "array", items: { type: "string" }, maxItems: 5 },
             },
-            required: ["summary", "sentiment"],
+            required: ["summary", "sentiment", "is_decision", "topics"],
           },
         },
       }),
@@ -140,6 +144,8 @@ Deno.serve(async (req) => {
         next_step: extracted.next_step ?? null,
         extracted_json: extracted,
         embedding,
+        is_decision: extracted.is_decision ?? false,
+        topics: extracted.topics ?? [],
         status: "processed",
       })
       .eq("id", interaction_id);

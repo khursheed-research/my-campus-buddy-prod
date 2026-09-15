@@ -79,9 +79,27 @@ export default async function DashboardPage() {
         </a>
         <a
           href="/dashboard/chat"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
         >
           AI Workspace →
+        </a>
+        <a
+          href="/dashboard/timeline"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
+        >
+          Timeline →
+        </a>
+        <a
+          href="/dashboard/decisions"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
+        >
+          Decision Memory →
+        </a>
+        <a
+          href="/dashboard/graph"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2"
+        >
+          Knowledge Graph →
         </a>
       </div>
 

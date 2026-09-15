@@ -62,8 +62,17 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
    explicitly told to say "I don't have that information" rather than guess. Shows source
    snippets under each answer. No chat history persistence yet (kept simple for this phase —
    ephemeral per browser session).
-5. **Decision Memory, Timeline, Knowledge Graph** — NOT STARTED. UI views over the
-   interactions data.
+5. **Decision Memory, Timeline, Knowledge Graph** — DONE.
+   - `/dashboard/timeline`: chronological feed of all captured interactions, department filter,
+     colored by sentiment, decisions flagged.
+   - `/dashboard/decisions`: real decisions only (auto-detected by extraction, not manually
+     flagged — see `is_decision` below), with text search across summary/content/topics.
+   - `/dashboard/graph`: topic co-occurrence graph built from real captured data — nodes are
+     topics (sized by frequency), edges are topics that appeared together in the same note.
+     Plain SVG, no extra graph library. Click a node to see the real interactions behind it.
+   - Extraction (`process-interaction`) extended to also detect `is_decision` (boolean) and
+     `topics` (up to 5 short strings) automatically — no extra input required from whoever
+     writes the note, consistent with the product's low-friction capture philosophy.
 6. **Real voice capture (AssemblyAI)** — NOT STARTED. Key already provided.
 7. **Admin & Access + Google integration** — NOT STARTED. Credentials already staged.
 8. **Insights & Analytics** — NOT STARTED. Deferred until enough real usage data.
