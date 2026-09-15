@@ -31,6 +31,10 @@ export default function NotesPage() {
   const [department, setDepartment] = useState("general");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const mediaRecorderRef = useState<{ current: MediaRecorder | null }>({ current: null })[0];
+  const chunksRef = useState<{ current: BlobPart[] }>({ current: [] })[0];
 
   async function loadNotes(cid: string) {
     const { data } = await supabase
@@ -72,6 +76,40 @@ export default function NotesPage() {
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notes, companyId]);
+
+  async function startRecording() {
+    setErrorMsg("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => chunksRef.current.push(e.data);
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        setTranscribing(true);
+        const { data, error } = await supabase.functions.invoke("transcribe-audio", {
+          body: blob,
+        });
+        setTranscribing(false);
+        if (error) {
+          setErrorMsg(error.message ?? "Transcription failed");
+          return;
+        }
+        setContent((prev) => (prev ? prev + " " + data.text : data.text));
+      };
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setRecording(true);
+    } catch {
+      setErrorMsg("Couldn't access your microphone — check your browser's permission for this site.");
+    }
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop();
+    setRecording(false);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -115,17 +153,35 @@ export default function NotesPage() {
       </a>
       <h1 className="text-2xl font-semibold mt-4 mb-1">Notes</h1>
       <p className="text-zinc-500 mb-6">
-        Type what happened. It gets read, summarized, and made searchable automatically.
+        Type or speak what happened. It gets read, summarized, and made searchable automatically.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-3 mb-10">
-        <textarea
-          className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 min-h-[120px]"
-          placeholder="What happened? e.g. 'Talked to the vendor about renewal, they want a 10% price increase, need to decide by Friday.'"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <textarea
+            className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 pr-14 min-h-[120px]"
+            placeholder="What happened? e.g. 'Talked to the vendor about renewal, they want a 10% price increase, need to decide by Friday.' Or just record it instead."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            onClick={recording ? stopRecording : startRecording}
+            disabled={transcribing}
+            title={recording ? "Stop recording" : "Record a voice note"}
+            className={
+              "absolute top-2 right-2 w-9 h-9 rounded-full flex items-center justify-center text-lg " +
+              (recording
+                ? "bg-red-500 text-white animate-pulse"
+                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700")
+            }
+          >
+            🎤
+          </button>
+        </div>
+        {recording && <p className="text-xs text-red-400">Recording… click the mic to stop.</p>}
+        {transcribing && <p className="text-xs text-zinc-500">Transcribing your recording…</p>}
         <div className="flex items-center justify-between gap-3">
           <select
             className="rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm"

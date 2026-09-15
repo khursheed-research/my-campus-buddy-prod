@@ -73,7 +73,13 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
    - Extraction (`process-interaction`) extended to also detect `is_decision` (boolean) and
      `topics` (up to 5 short strings) automatically — no extra input required from whoever
      writes the note, consistent with the product's low-friction capture philosophy.
-6. **Real voice capture (AssemblyAI)** — NOT STARTED. Key already provided.
+6. **Real voice capture (AssemblyAI)** — DONE. Mic button on `/dashboard/notes` records
+   audio, uploads to AssemblyAI via the new `transcribe-audio` Edge Function
+   (upload → submit with required `speech_models` param → poll until complete), and drops the
+   real transcript into the note text for review before saving. Important: the AssemblyAI key
+   must be a **Supabase Edge Function secret**, not a Vercel env var — Vercel env vars are only
+   visible to the Next.js frontend, not to Supabase's Edge Functions, which run on entirely
+   separate infrastructure. (This was originally set up wrong — corrected during this phase.)
 7. **Admin & Access + Google integration** — NOT STARTED. Credentials already staged.
 8. **Insights & Analytics** — NOT STARTED. Deferred until enough real usage data.
 9. **Contribution & Rewards** — NOT STARTED.
