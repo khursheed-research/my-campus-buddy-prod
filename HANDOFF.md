@@ -80,7 +80,25 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
    must be a **Supabase Edge Function secret**, not a Vercel env var — Vercel env vars are only
    visible to the Next.js frontend, not to Supabase's Edge Functions, which run on entirely
    separate infrastructure. (This was originally set up wrong — corrected during this phase.)
-7. **Admin & Access + Google integration** — NOT STARTED. Credentials already staged.
+7. **Admin & Access + Google integration** — DONE (backend + UI complete; ONE manual step
+   remains for Anwar — see below).
+   - `/dashboard/admin`: team directory (admins can change role/clearance for anyone in the
+     company), invite-by-email (creates a `company_invites` row; when that email signs up,
+     `/dashboard`'s provisioning logic attaches them to the existing company instead of
+     creating a new one — real invite flow, not just a UI mockup), and Google connection
+     status/button.
+   - Real Google OAuth: `/auth/google/start` builds the consent URL server-side (keeps the
+     Client ID out of the browser bundle), `/auth/google/callback` exchanges the code for real
+     access+refresh tokens, fetches the connected account's email, and stores everything in a
+     new `google_connections` table (one per company, admin-managed via RLS).
+   - **Scope note**: this phase connects the account and stores real tokens — it does NOT yet
+     pull actual emails/events into `interactions`. That's a natural follow-on, not yet
+     scheduled as its own phase.
+   - **Anwar's one remaining step**: add the exact redirect URI
+     `https://my-campus-buddy-prod.vercel.app/auth/google/callback` to the OAuth Client's
+     "Authorized redirect URIs" list in Google Cloud Console (Credentials → the OAuth Client →
+     Edit). Without this, Google will reject the callback with a redirect_uri_mismatch error.
+     This is a config change only he can make (Claude can't edit his Google Cloud Console).
 8. **Insights & Analytics** — NOT STARTED. Deferred until enough real usage data.
 9. **Contribution & Rewards** — NOT STARTED.
 10. **Strategy Advisor** — NOT STARTED.

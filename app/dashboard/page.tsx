@@ -16,38 +16,64 @@ export default async function DashboardPage() {
     .eq("id", user.id)
     .single();
 
-  // First login after signup: no company yet. Create one from the signup
-  // metadata and link this profile to it.
+  // First login after signup: no company yet. Check for a pending invite
+  // matching this user's own verified email first — if someone invited
+  // them, they join that company instead of getting a brand new one.
   if (profile && !profile.company_id) {
-    const companyName =
-      (user.user_metadata?.company_name as string | undefined) || "My Organization";
+    const { data: invite } = await supabase
+      .from("company_invites")
+      .select("id, company_id, role, clearance")
+      .is("accepted_at", null)
+      .ilike("email", user.email ?? "")
+      .maybeSingle();
 
-    const { data: company, error: companyError } = await supabase
-      .from("companies")
-      .insert({ name: companyName })
-      .select("id")
-      .single();
-
-    if (companyError) {
-      return (
-        <main className="min-h-screen p-8">
-          <p className="text-red-400">
-            Couldn&apos;t finish setting up your account: {companyError.message}
-          </p>
-          <p className="text-zinc-500 mt-2">
-            Please refresh this page. If this keeps happening, contact support.
-          </p>
-        </main>
-      );
-    }
-
-    if (company) {
+    if (invite) {
       await supabase
         .from("profiles")
-        .update({ company_id: company.id, role: "admin", clearance: "executive" })
+        .update({ company_id: invite.company_id, role: invite.role, clearance: invite.clearance })
         .eq("id", user.id);
+      await supabase
+        .from("company_invites")
+        .update({ accepted_at: new Date().toISOString() })
+        .eq("id", invite.id);
 
-      profile = { ...profile, company_id: company.id, role: "admin", clearance: "executive" };
+      profile = {
+        ...profile,
+        company_id: invite.company_id,
+        role: invite.role,
+        clearance: invite.clearance,
+      };
+    } else {
+      const companyName =
+        (user.user_metadata?.company_name as string | undefined) || "My Organization";
+
+      const { data: company, error: companyError } = await supabase
+        .from("companies")
+        .insert({ name: companyName })
+        .select("id")
+        .single();
+
+      if (companyError) {
+        return (
+          <main className="min-h-screen p-8">
+            <p className="text-red-400">
+              Couldn&apos;t finish setting up your account: {companyError.message}
+            </p>
+            <p className="text-zinc-500 mt-2">
+              Please refresh this page. If this keeps happening, contact support.
+            </p>
+          </main>
+        );
+      }
+
+      if (company) {
+        await supabase
+          .from("profiles")
+          .update({ company_id: company.id, role: "admin", clearance: "executive" })
+          .eq("id", user.id);
+
+        profile = { ...profile, company_id: company.id, role: "admin", clearance: "executive" };
+      }
     }
   }
 
@@ -97,9 +123,15 @@ export default async function DashboardPage() {
         </a>
         <a
           href="/dashboard/graph"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
         >
           Knowledge Graph →
+        </a>
+        <a
+          href="/dashboard/admin"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2"
+        >
+          Admin & Access →
         </a>
       </div>
 

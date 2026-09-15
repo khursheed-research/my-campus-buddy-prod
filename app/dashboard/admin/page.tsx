@@ -1,0 +1,234 @@
+"use client";
+
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+type Member = {
+  id: string;
+  full_name: string | null;
+  role: string;
+  clearance: string;
+};
+
+const ROLES = ["admin", "manager", "member"];
+const CLEARANCES = ["executive", "leadership", "manager", "ic"];
+
+function AdminPageInner() {
+  const supabase = createClient();
+  const searchParams = useSearchParams();
+
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [googleConnection, setGoogleConnection] = useState<{ google_email: string } | null>(null);
+
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("member");
+  const [inviteClearance, setInviteClearance] = useState("ic");
+  const [inviteMsg, setInviteMsg] = useState("");
+
+  async function loadAll(cid: string) {
+    const { data: memberRows } = await supabase
+      .from("profiles")
+      .select("id, full_name, role, clearance")
+      .eq("company_id", cid);
+    setMembers(memberRows ?? []);
+
+    const { data: conn } = await supabase
+      .from("google_connections")
+      .select("google_email")
+      .eq("company_id", cid)
+      .maybeSingle();
+    setGoogleConnection(conn);
+  }
+
+  useEffect(() => {
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id, role")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+      setCompanyId(profile.company_id);
+      setIsAdmin(profile.role === "admin");
+      loadAll(profile.company_id);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function updateMember(id: string, field: "role" | "clearance", value: string) {
+    await supabase.from("profiles").update({ [field]: value }).eq("id", id);
+    if (companyId) loadAll(companyId);
+  }
+
+  async function sendInvite(e: React.FormEvent) {
+    e.preventDefault();
+    if (!companyId || !inviteEmail.trim()) return;
+
+    const { error } = await supabase.from("company_invites").insert({
+      company_id: companyId,
+      email: inviteEmail.trim(),
+      role: inviteRole,
+      clearance: inviteClearance,
+    });
+
+    setInviteMsg(error ? error.message : `Invited ${inviteEmail}. They'll join automatically when they sign up with this email.`);
+    setInviteEmail("");
+  }
+
+  const googleError = searchParams.get("google_error");
+  const googleJustConnected = searchParams.get("google_connected");
+
+  return (
+    <main className="min-h-screen p-8 max-w-2xl">
+      <a href="/dashboard" className="text-sm text-zinc-500 underline">
+        ← Back to dashboard
+      </a>
+      <h1 className="text-2xl font-semibold mt-4 mb-1">Admin & Access</h1>
+      <p className="text-zinc-500 mb-6">
+        {isAdmin ? "Manage your team and integrations." : "Your team and connected integrations."}
+      </p>
+
+      {/* Google integration */}
+      <section className="mb-10">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+          Google integration
+        </h2>
+        {googleJustConnected && (
+          <p className="text-green-400 text-sm mb-2">Google connected successfully.</p>
+        )}
+        {googleError && (
+          <p className="text-red-400 text-sm mb-2">Google connection failed: {googleError}</p>
+        )}
+        <div className="rounded-md border border-zinc-800 bg-zinc-900/50 px-4 py-3 flex items-center justify-between">
+          {googleConnection ? (
+            <p className="text-sm text-zinc-300">
+              Connected as <span className="text-amber-500">{googleConnection.google_email}</span>
+            </p>
+          ) : (
+            <p className="text-sm text-zinc-500">Not connected</p>
+          )}
+          {isAdmin && (
+            <a
+              href="/auth/google/start"
+              className="text-sm rounded-md bg-amber-500 text-black font-medium px-3 py-1.5"
+            >
+              {googleConnection ? "Reconnect" : "Connect Google"}
+            </a>
+          )}
+        </div>
+      </section>
+
+      {/* Team directory */}
+      <section className="mb-10">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">Team</h2>
+        <div className="space-y-2">
+          {members.map((m) => (
+            <div
+              key={m.id}
+              className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/50 px-4 py-2.5"
+            >
+              <span className="text-sm">{m.full_name ?? "Unnamed"}</span>
+              {isAdmin ? (
+                <div className="flex gap-2">
+                  <select
+                    className="text-xs rounded bg-zinc-800 border border-zinc-700 px-2 py-1"
+                    value={m.role}
+                    onChange={(e) => updateMember(m.id, "role", e.target.value)}
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="text-xs rounded bg-zinc-800 border border-zinc-700 px-2 py-1"
+                    value={m.clearance}
+                    onChange={(e) => updateMember(m.id, "clearance", e.target.value)}
+                  >
+                    {CLEARANCES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <span className="text-xs text-zinc-500">
+                  {m.role} · {m.clearance}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Invite */}
+      {isAdmin && (
+        <section>
+          <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+            Invite a teammate
+          </h2>
+          <form onSubmit={sendInvite} className="space-y-3">
+            <input
+              type="email"
+              required
+              className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2"
+              placeholder="teammate@company.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <select
+                className="rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm"
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value)}
+              >
+                {ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm"
+                value={inviteClearance}
+                onChange={(e) => setInviteClearance(e.target.value)}
+              >
+                {CLEARANCES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                className="rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2"
+              >
+                Invite
+              </button>
+            </div>
+            {inviteMsg && <p className="text-sm text-zinc-400">{inviteMsg}</p>}
+          </form>
+        </section>
+      )}
+    </main>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminPageInner />
+    </Suspense>
+  );
+}

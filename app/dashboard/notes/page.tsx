@@ -171,13 +171,27 @@ export default function NotesPage() {
             disabled={transcribing}
             title={recording ? "Stop recording" : "Record a voice note"}
             className={
-              "absolute top-2 right-2 w-9 h-9 rounded-full flex items-center justify-center text-lg " +
+              "absolute top-2 right-2 w-10 h-10 rounded-full flex items-center justify-center transition-all " +
               (recording
-                ? "bg-red-500 text-white animate-pulse"
-                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700")
+                ? "bg-red-500 shadow-[0_0_0_4px_rgba(239,68,68,0.3)] animate-pulse"
+                : "bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.25)] hover:shadow-[0_0_0_5px_rgba(245,158,11,0.35)] hover:scale-105")
             }
           >
-            🎤
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={recording ? "white" : "black"}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" y1="19" x2="12" y2="23" />
+              <line x1="8" y1="23" x2="16" y2="23" />
+            </svg>
           </button>
         </div>
         {recording && <p className="text-xs text-red-400">Recording… click the mic to stop.</p>}
