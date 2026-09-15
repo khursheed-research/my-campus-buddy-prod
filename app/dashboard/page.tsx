@@ -73,9 +73,15 @@ export default async function DashboardPage() {
         </a>
         <a
           href="/dashboard/notes"
-          className="inline-block rounded-md border border-amber-500 text-amber-500 text-sm font-medium px-4 py-2"
+          className="inline-block rounded-md border border-amber-500 text-amber-500 text-sm font-medium px-4 py-2 mr-3"
         >
           Notes →
+        </a>
+        <a
+          href="/dashboard/chat"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2"
+        >
+          AI Workspace →
         </a>
       </div>
 

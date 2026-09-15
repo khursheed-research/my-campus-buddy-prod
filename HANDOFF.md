@@ -56,8 +56,12 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
    department, auto-extracted (summary/sentiment/next_step via `gemini-3.5-flash-lite`) and
    embedded (`gemini-embedding-001`) via the `process-interaction` Edge Function. Searchable
    through `match_interactions` RPC (same pattern as `match_document_chunks`).
-4. **AI Workspace (grounded chat)** — NOT STARTED. Real chat UI querying
-   `match_document_chunks` + `match_interactions`.
+4. **AI Workspace (grounded chat)** — DONE. `/dashboard/chat`: embeds the question
+   (`gemini-embedding-001`), retrieves top matches from `match_document_chunks` +
+   `match_interactions`, answers with `gemini-3.5-flash` using ONLY that retrieved context —
+   explicitly told to say "I don't have that information" rather than guess. Shows source
+   snippets under each answer. No chat history persistence yet (kept simple for this phase —
+   ephemeral per browser session).
 5. **Decision Memory, Timeline, Knowledge Graph** — NOT STARTED. UI views over the
    interactions data.
 6. **Real voice capture (AssemblyAI)** — NOT STARTED. Key already provided.
