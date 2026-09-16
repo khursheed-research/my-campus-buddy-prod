@@ -141,9 +141,15 @@ export default async function DashboardPage() {
         </a>
         <a
           href="/dashboard/contribution"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
         >
           Contribution & Rewards →
+        </a>
+        <a
+          href="/dashboard/strategy"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2"
+        >
+          Strategy Advisor →
         </a>
       </div>
 

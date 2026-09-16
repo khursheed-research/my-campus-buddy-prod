@@ -110,7 +110,12 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
    `generate-report` Edge Function. The function aggregates real stats server-side and instructs
    Gemini to use ONLY that real data — never invent names/numbers — and explicitly says so
    honestly when there isn't enough activity yet rather than generating filler.
-10. **Strategy Advisor** — NOT STARTED.
+10. **Strategy Advisor** — DONE. `/dashboard/strategy`: describe a situation, get a
+    recommendation via the new `generate-strategy` Edge Function — same retrieval pattern as
+    chat (embeds the situation, pulls relevant real document/interaction context via
+    `match_document_chunks`/`match_interactions`), explicitly told to say so plainly and fall
+    back to clearly-labeled general advice when no real company history matches, rather than
+    inventing company-specific claims.
 11. **Telephony (Twilio)** — DEFERRED until a paying customer exists.
 
 ## Your Part
