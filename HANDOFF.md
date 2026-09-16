@@ -104,7 +104,12 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
    lead pipeline funnel (bar — will show all zeros until lead capture UI exists, honestly
    labeled rather than faked), and top topics. Every chart reads real data and shows an honest
    empty-state message rather than a populated-looking placeholder when there's nothing yet.
-9. **Contribution & Rewards** — NOT STARTED.
+9. **Contribution & Rewards** — DONE. `/dashboard/contribution`: real leaderboard (1pt/note,
+   3pt/decision, 2pt/upload — transparent scoring shown on the page) computed from real
+   `interactions`/`documents` rows, plus an AI-generated 6-month narrative report via the new
+   `generate-report` Edge Function. The function aggregates real stats server-side and instructs
+   Gemini to use ONLY that real data — never invent names/numbers — and explicitly says so
+   honestly when there isn't enough activity yet rather than generating filler.
 10. **Strategy Advisor** — NOT STARTED.
 11. **Telephony (Twilio)** — DEFERRED until a paying customer exists.
 
