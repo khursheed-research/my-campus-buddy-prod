@@ -99,7 +99,11 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
      "Authorized redirect URIs" list in Google Cloud Console (Credentials → the OAuth Client →
      Edit). Without this, Google will reject the callback with a redirect_uri_mismatch error.
      This is a config change only he can make (Claude can't edit his Google Cloud Console).
-8. **Insights & Analytics** — NOT STARTED. Deferred until enough real usage data.
+8. **Insights & Analytics** — DONE. `/dashboard/insights` with real Recharts-powered
+   dashboards: 14-day activity trend, sentiment breakdown (pie), decisions by department (bar),
+   lead pipeline funnel (bar — will show all zeros until lead capture UI exists, honestly
+   labeled rather than faked), and top topics. Every chart reads real data and shows an honest
+   empty-state message rather than a populated-looking placeholder when there's nothing yet.
 9. **Contribution & Rewards** — NOT STARTED.
 10. **Strategy Advisor** — NOT STARTED.
 11. **Telephony (Twilio)** — DEFERRED until a paying customer exists.

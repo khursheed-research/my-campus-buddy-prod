@@ -129,9 +129,15 @@ export default async function DashboardPage() {
         </a>
         <a
           href="/dashboard/admin"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
         >
           Admin & Access →
+        </a>
+        <a
+          href="/dashboard/insights"
+          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2"
+        >
+          Insights →
         </a>
       </div>
 
