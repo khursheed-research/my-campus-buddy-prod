@@ -4,6 +4,13 @@ import { NextResponse, type NextRequest } from "next/server";
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 export async function middleware(request: NextRequest) {
+  // Webhooks (Twilio, etc.) have no user session and must never be
+  // redirected to /login — they handle their own auth (signature
+  // validation) inside the route itself.
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

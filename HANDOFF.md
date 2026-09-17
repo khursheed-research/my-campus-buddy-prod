@@ -116,7 +116,44 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
     `match_document_chunks`/`match_interactions`), explicitly told to say so plainly and fall
     back to clearly-labeled general advice when no real company history matches, rather than
     inventing company-specific claims.
-11. **Telephony (Twilio)** — DEFERRED until a paying customer exists.
+11. **Telephony (Twilio)** — CODE COMPLETE, awaiting Anwar's Twilio credentials to go live
+    (per his choice: build now, keep on free trial for now, upgrade later when there's revenue).
+    - `app/api/twilio/voice` — TwiML webhook: answers inbound calls, records them, validates
+      Twilio's request signature.
+    - `app/api/twilio/recording-status` — the real substance: on a completed recording, fetches
+      the audio (Twilio Basic Auth), transcribes via AssemblyAI, extracts
+      summary/sentiment/next_step/is_decision/topics via Gemini (same schema as
+      `process-interaction`), embeds it, and inserts a real `interactions` row
+      (type=`call`, source=`call_recording`) — which means calls automatically show up in
+      Timeline, Decision Memory, Knowledge Graph, Insights, and Strategy Advisor with zero
+      extra work, since they share the same table. Idempotent by `external_call_sid` (Twilio
+      may retry webhooks). Signature-validated.
+    - New `twilio_numbers` table maps a real Twilio phone number → company + default
+      department, so a webhook knows which tenant a call belongs to. Registered via
+      `/dashboard/admin`'s new "Call capture (Twilio)" section (admin-only).
+    - **Important runtime distinction discovered/applied here**: these are Next.js Route
+      Handlers (Vercel), not Supabase Edge Functions — so unlike every other secret in this
+      project, their env vars must be **Vercel env vars**, not Supabase secrets. This means
+      `GEMINI_API_KEY` and `ASSEMBLYAI_API_KEY` now need to exist in **both** places (Supabase
+      secrets for the Edge Functions, Vercel env vars for these webhook routes) — intentional
+      duplication, not a mistake.
+    - **New Vercel env vars needed** (Claude has the actual values from earlier legitimate
+      retrieval during this project's own debugging — ask Claude for them in chat rather than
+      storing them here; real secrets never belong in a committed repo file, even
+      documentation):
+      - `SUPABASE_SERVICE_ROLE_KEY` (same value used by Supabase itself — ask Claude)
+      - `GEMINI_API_KEY` (same value already working in Supabase secrets — ask Claude)
+      - `ASSEMBLYAI_API_KEY` (same value already in Supabase secrets — ask Claude)
+      - `TWILIO_ACCOUNT_SID` (the one Anwar provided earlier in chat)
+    - **Still genuinely missing, only Anwar can provide**: `TWILIO_AUTH_TOKEN` (never given),
+      and a real Twilio phone number (trial account hasn't gotten one yet — he chose to defer
+      this step). Both needed before this phase can actually go live.
+    - **Once he has both**: (1) add all env vars above to Vercel, (2) register the number in
+      `/dashboard/admin`, (3) in Twilio Console, set that number's "A call comes in" webhook
+      (HTTP POST) to `https://my-campus-buddy-prod.vercel.app/api/twilio/voice`.
+    - **Scope note**: inbound call recording capture only — no outbound click-to-call in this
+      version (not in the original blueprint's stated approach either, which specifically
+      recommended post-call webhook capture over live streaming).
 
 ## Your Part
 - Create the GitHub repo (or give Claude a PAT to create/push to one) — suggested name

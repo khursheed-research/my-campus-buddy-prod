@@ -22,6 +22,9 @@ function AdminPageInner() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [googleConnection, setGoogleConnection] = useState<{ google_email: string } | null>(null);
+  const [twilioNumber, setTwilioNumber] = useState<{ phone_number: string; department: string } | null>(null);
+  const [newTwilioNumber, setNewTwilioNumber] = useState("");
+  const [twilioMsg, setTwilioMsg] = useState("");
 
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
@@ -41,6 +44,13 @@ function AdminPageInner() {
       .eq("company_id", cid)
       .maybeSingle();
     setGoogleConnection(conn);
+
+    const { data: twilio } = await supabase
+      .from("twilio_numbers")
+      .select("phone_number, department")
+      .eq("company_id", cid)
+      .maybeSingle();
+    setTwilioNumber(twilio);
   }
 
   useEffect(() => {
@@ -67,6 +77,22 @@ function AdminPageInner() {
   async function updateMember(id: string, field: "role" | "clearance", value: string) {
     await supabase.from("profiles").update({ [field]: value }).eq("id", id);
     if (companyId) loadAll(companyId);
+  }
+
+  async function saveTwilioNumber(e: React.FormEvent) {
+    e.preventDefault();
+    if (!companyId || !newTwilioNumber.trim()) return;
+
+    const { error } = await supabase.from("twilio_numbers").upsert(
+      { company_id: companyId, phone_number: newTwilioNumber.trim() },
+      { onConflict: "company_id" }
+    );
+
+    setTwilioMsg(error ? error.message : "Saved.");
+    if (!error) {
+      setNewTwilioNumber("");
+      loadAll(companyId);
+    }
   }
 
   async function sendInvite(e: React.FormEvent) {
@@ -127,7 +153,43 @@ function AdminPageInner() {
         </div>
       </section>
 
-      {/* Team directory */}
+      {/* Real phone calling */}
+      <section className="mb-10">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+          Call capture (Twilio)
+        </h2>
+        <div className="rounded-md border border-zinc-800 bg-zinc-900/50 px-4 py-3 mb-3">
+          {twilioNumber ? (
+            <p className="text-sm text-zinc-300">
+              Registered number: <span className="text-amber-500">{twilioNumber.phone_number}</span>
+            </p>
+          ) : (
+            <p className="text-sm text-zinc-500">No Twilio number registered yet.</p>
+          )}
+        </div>
+        {isAdmin && (
+          <form onSubmit={saveTwilioNumber} className="flex gap-2">
+            <input
+              className="flex-1 rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm"
+              placeholder="+1XXXXXXXXXX"
+              value={newTwilioNumber}
+              onChange={(e) => setNewTwilioNumber(e.target.value)}
+            />
+            <button
+              type="submit"
+              className="rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2"
+            >
+              Save
+            </button>
+          </form>
+        )}
+        {twilioMsg && <p className="text-xs text-zinc-500 mt-2">{twilioMsg}</p>}
+        <p className="text-xs text-zinc-600 mt-2">
+          Enter your real Twilio number exactly as it appears in your Twilio console (e.g.
+          +14155551234), then set that number's &quot;A call comes in&quot; webhook in Twilio to
+          this app&apos;s /api/twilio/voice URL.
+        </p>
+      </section>
       <section className="mb-10">
         <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">Team</h2>
         <div className="space-y-2">
