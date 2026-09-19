@@ -2,7 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --ink: #0b0e14;
+  --panel: #12161f;
+  --panel-raised: #171c27;
+  --border: #262d3a;
+  --paper: #e9e6dd;
+  --muted: #9a9689;
+  --brass: #b8934a;
+  --brass-bright: #d4af6a;
+  --signal-red: #c0524a;
+  --signal-green: #5c8a6b;
+}
+
 body {
-  background: #0a0a0f;
-  color: #f4f4f5;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display), Georgia, serif;
 }

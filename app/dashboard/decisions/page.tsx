@@ -56,24 +56,21 @@ export default function DecisionsPage() {
   });
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl">
-      <a href="/dashboard" className="text-sm text-zinc-500 underline">
-        ← Back to dashboard
-      </a>
+    <div className="p-8 max-w-2xl">
       <h1 className="text-2xl font-semibold mt-4 mb-1">Decision Memory</h1>
-      <p className="text-zinc-500 mb-6">
+      <p className="text-muted mb-6">
         Every real decision automatically detected from your notes, in one searchable place.
       </p>
 
       <input
-        className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 mb-6"
+        className="w-full rounded-md bg-panel border border-border px-3 py-2 mb-6"
         placeholder="Search decisions…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
 
       {filtered.length === 0 && (
-        <p className="text-zinc-600 text-sm">
+        <p className="text-muted/70 text-sm">
           {decisions.length === 0
             ? "No decisions captured yet — they're detected automatically from your notes."
             : "No decisions match that search."}
@@ -82,16 +79,16 @@ export default function DecisionsPage() {
 
       <div className="space-y-3">
         {filtered.map((d) => (
-          <div key={d.id} className="rounded-md border border-amber-900/40 bg-zinc-900/50 px-4 py-3">
+          <div key={d.id} className="rounded-md border border-brass/30 bg-panel px-4 py-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs uppercase tracking-wide text-zinc-500">
+              <span className="text-xs uppercase tracking-wide text-muted">
                 {d.department} · {new Date(d.occurred_at).toLocaleDateString()}
               </span>
             </div>
-            <p className="text-sm text-zinc-200 mb-2">{d.summary ?? d.raw_content}</p>
+            <p className="text-sm text-paper mb-2">{d.summary ?? d.raw_content}</p>
             {d.next_step && (
-              <p className="text-sm text-zinc-500">
-                <span className="text-zinc-600">Next step: </span>
+              <p className="text-sm text-muted">
+                <span className="text-muted/70">Next step: </span>
                 {d.next_step}
               </p>
             )}
@@ -100,7 +97,7 @@ export default function DecisionsPage() {
                 {d.topics.map((t) => (
                   <span
                     key={t}
-                    className="text-xs rounded-full border border-zinc-700 text-zinc-400 px-2 py-0.5"
+                    className="text-xs rounded-full border border-border text-muted px-2 py-0.5"
                   >
                     {t}
                   </span>
@@ -110,6 +107,6 @@ export default function DecisionsPage() {
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

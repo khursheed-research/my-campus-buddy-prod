@@ -87,19 +87,16 @@ export default function StrategyPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl">
-      <a href="/dashboard" className="text-sm text-zinc-500 underline">
-        ← Back to dashboard
-      </a>
+    <div className="p-8 max-w-2xl">
       <h1 className="text-2xl font-semibold mt-4 mb-1">Strategy Advisor</h1>
-      <p className="text-zinc-500 mb-6">
+      <p className="text-muted mb-6">
         Describe a decision you're facing. Recommendations are grounded in your company's own
         documents and past decisions — and say so plainly when there isn't enough history yet.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-3 mb-10">
         <textarea
-          className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 min-h-[100px]"
+          className="w-full rounded-md bg-panel border border-border px-3 py-2 min-h-[100px]"
           placeholder="e.g. 'A vendor wants a 10% price increase on renewal. Should we accept or push back?'"
           value={situation}
           onChange={(e) => setSituation(e.target.value)}
@@ -108,31 +105,31 @@ export default function StrategyPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2 disabled:opacity-50"
+          className="rounded-md bg-brass text-black text-sm font-medium px-4 py-2 disabled:opacity-50"
         >
           {submitting ? "Saving…" : "Get recommendation"}
         </button>
-        {errorMsg && <p className="text-red-400 text-sm">{errorMsg}</p>}
+        {errorMsg && <p className="text-signal-red text-sm">{errorMsg}</p>}
       </form>
 
       <div className="space-y-4">
         {strategies.length === 0 && (
-          <p className="text-zinc-600 text-sm">No situations logged yet.</p>
+          <p className="text-muted/70 text-sm">No situations logged yet.</p>
         )}
         {strategies.map((s) => (
-          <div key={s.id} className="rounded-md border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-            <p className="text-sm text-zinc-200 mb-2">{s.situation}</p>
+          <div key={s.id} className="rounded-md border border-border bg-panel px-4 py-3">
+            <p className="text-sm text-paper mb-2">{s.situation}</p>
             {s.status === "pending" && (
-              <p className="text-xs text-zinc-500">Thinking…</p>
+              <p className="text-xs text-muted">Thinking…</p>
             )}
             {s.recommendation && (
-              <div className="text-sm border-t border-zinc-800 pt-2 mt-2 whitespace-pre-wrap text-zinc-300">
+              <div className="text-sm border-t border-border pt-2 mt-2 whitespace-pre-wrap text-paper/90">
                 {s.recommendation}
               </div>
             )}
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

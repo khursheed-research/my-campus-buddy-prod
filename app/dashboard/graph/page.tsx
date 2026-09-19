@@ -88,17 +88,14 @@ export default function GraphPage() {
     : [];
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl">
-      <a href="/dashboard" className="text-sm text-zinc-500 underline">
-        ← Back to dashboard
-      </a>
+    <div className="p-8 max-w-2xl">
       <h1 className="text-2xl font-semibold mt-4 mb-1">Knowledge Graph</h1>
-      <p className="text-zinc-500 mb-6">
+      <p className="text-muted mb-6">
         How topics from your real notes connect. Bigger dots come up more often; click one to see why.
       </p>
 
       {nodes.length === 0 ? (
-        <p className="text-zinc-600 text-sm">
+        <p className="text-muted/70 text-sm">
           Not enough captured notes yet to build a graph — add a few notes first.
         </p>
       ) : (
@@ -150,16 +147,16 @@ export default function GraphPage() {
           </h2>
           <div className="space-y-2">
             {relatedInteractions.map((it) => (
-              <div key={it.id} className="rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-2">
-                <p className="text-xs text-zinc-500 mb-1">
+              <div key={it.id} className="rounded-md border border-border bg-panel px-3 py-2">
+                <p className="text-xs text-muted mb-1">
                   {new Date(it.occurred_at).toLocaleDateString()}
                 </p>
-                <p className="text-sm text-zinc-300">{it.summary ?? it.raw_content}</p>
+                <p className="text-sm text-paper/90">{it.summary ?? it.raw_content}</p>
               </div>
             ))}
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

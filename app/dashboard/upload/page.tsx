@@ -125,48 +125,45 @@ export default function UploadPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl">
-      <a href="/dashboard" className="text-sm text-zinc-500 underline">
-        ← Back to dashboard
-      </a>
+    <div className="p-8 max-w-2xl">
       <h1 className="text-2xl font-semibold mt-4 mb-1">Upload documents</h1>
-      <p className="text-zinc-500 mb-6">
+      <p className="text-muted mb-6">
         Real files, stored privately, scoped to your company only.
       </p>
 
-      <label className="block rounded-lg border border-dashed border-zinc-700 p-8 text-center cursor-pointer hover:border-amber-500 transition-colors">
+      <label className="block rounded-lg border border-dashed border-border p-8 text-center cursor-pointer hover:border-brass transition-colors">
         <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
-        <span className="text-zinc-400">
+        <span className="text-muted">
           {uploading ? "Uploading…" : "Click to choose a file"}
         </span>
       </label>
 
-      {errorMsg && <p className="text-red-400 text-sm mt-3">{errorMsg}</p>}
+      {errorMsg && <p className="text-signal-red text-sm mt-3">{errorMsg}</p>}
 
       <div className="mt-8 space-y-2">
         {docs.length === 0 && (
-          <p className="text-zinc-600 text-sm">No documents uploaded yet.</p>
+          <p className="text-muted/70 text-sm">No documents uploaded yet.</p>
         )}
         {docs.map((d) => (
           <div
             key={d.id}
-            className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/50 px-4 py-3"
+            className="flex items-center justify-between rounded-md border border-border bg-panel px-4 py-3"
           >
             <div>
               <p className="text-sm">{d.file_name}</p>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted">
                 {d.size_bytes ? `${Math.round(d.size_bytes / 1024)} KB` : ""} ·{" "}
                 {new Date(d.created_at).toLocaleString()}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs uppercase tracking-wide text-amber-500">
+              <span className="text-xs uppercase tracking-wide text-brass">
                 {d.status}
               </span>
               {(d.status === "uploaded" || d.status === "error") && (
                 <button
                   onClick={() => retryProcessing(d.id)}
-                  className="text-xs underline text-zinc-400 hover:text-amber-500"
+                  className="text-xs underline text-muted hover:text-brass"
                 >
                   Retry
                 </button>
@@ -175,6 +172,6 @@ export default function UploadPage() {
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

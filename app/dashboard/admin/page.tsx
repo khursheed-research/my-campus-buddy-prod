@@ -11,8 +11,15 @@ type Member = {
   clearance: string;
 };
 
-const ROLES = ["admin", "manager", "member"];
+const ROLES = ["founder", "cto", "admin", "manager", "member"];
 const CLEARANCES = ["executive", "leadership", "manager", "ic"];
+
+function invitableRoles(currentRole: string): string[] {
+  if (currentRole === "founder") return ["cto", "admin", "manager", "member"];
+  if (currentRole === "cto") return ["admin", "manager", "member"];
+  if (currentRole === "manager") return ["member"];
+  return [];
+}
 
 function AdminPageInner() {
   const supabase = createClient();
@@ -20,6 +27,7 @@ function AdminPageInner() {
 
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [currentRole, setCurrentRole] = useState("");
   const [members, setMembers] = useState<Member[]>([]);
   const [googleConnection, setGoogleConnection] = useState<{ google_email: string } | null>(null);
   const [twilioNumber, setTwilioNumber] = useState<{ phone_number: string; department: string } | null>(null);
@@ -68,7 +76,8 @@ function AdminPageInner() {
 
       if (!profile?.company_id) return;
       setCompanyId(profile.company_id);
-      setIsAdmin(profile.role === "admin");
+      setIsAdmin(["founder", "cto", "admin"].includes(profile.role));
+      setCurrentRole(profile.role);
       loadAll(profile.company_id);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -114,38 +123,35 @@ function AdminPageInner() {
   const googleJustConnected = searchParams.get("google_connected");
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl">
-      <a href="/dashboard" className="text-sm text-zinc-500 underline">
-        ← Back to dashboard
-      </a>
+    <div className="p-8 max-w-2xl">
       <h1 className="text-2xl font-semibold mt-4 mb-1">Admin & Access</h1>
-      <p className="text-zinc-500 mb-6">
+      <p className="text-muted mb-6">
         {isAdmin ? "Manage your team and integrations." : "Your team and connected integrations."}
       </p>
 
       {/* Google integration */}
       <section className="mb-10">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted mb-3">
           Google integration
         </h2>
         {googleJustConnected && (
-          <p className="text-green-400 text-sm mb-2">Google connected successfully.</p>
+          <p className="text-signal-green text-sm mb-2">Google connected successfully.</p>
         )}
         {googleError && (
-          <p className="text-red-400 text-sm mb-2">Google connection failed: {googleError}</p>
+          <p className="text-signal-red text-sm mb-2">Google connection failed: {googleError}</p>
         )}
-        <div className="rounded-md border border-zinc-800 bg-zinc-900/50 px-4 py-3 flex items-center justify-between">
+        <div className="rounded-md border border-border bg-panel px-4 py-3 flex items-center justify-between">
           {googleConnection ? (
-            <p className="text-sm text-zinc-300">
-              Connected as <span className="text-amber-500">{googleConnection.google_email}</span>
+            <p className="text-sm text-paper/90">
+              Connected as <span className="text-brass">{googleConnection.google_email}</span>
             </p>
           ) : (
-            <p className="text-sm text-zinc-500">Not connected</p>
+            <p className="text-sm text-muted">Not connected</p>
           )}
           {isAdmin && (
             <a
               href="/auth/google/start"
-              className="text-sm rounded-md bg-amber-500 text-black font-medium px-3 py-1.5"
+              className="text-sm rounded-md bg-brass text-black font-medium px-3 py-1.5"
             >
               {googleConnection ? "Reconnect" : "Connect Google"}
             </a>
@@ -155,54 +161,54 @@ function AdminPageInner() {
 
       {/* Real phone calling */}
       <section className="mb-10">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted mb-3">
           Call capture (Twilio)
         </h2>
-        <div className="rounded-md border border-zinc-800 bg-zinc-900/50 px-4 py-3 mb-3">
+        <div className="rounded-md border border-border bg-panel px-4 py-3 mb-3">
           {twilioNumber ? (
-            <p className="text-sm text-zinc-300">
-              Registered number: <span className="text-amber-500">{twilioNumber.phone_number}</span>
+            <p className="text-sm text-paper/90">
+              Registered number: <span className="text-brass">{twilioNumber.phone_number}</span>
             </p>
           ) : (
-            <p className="text-sm text-zinc-500">No Twilio number registered yet.</p>
+            <p className="text-sm text-muted">No Twilio number registered yet.</p>
           )}
         </div>
         {isAdmin && (
           <form onSubmit={saveTwilioNumber} className="flex gap-2">
             <input
-              className="flex-1 rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm"
+              className="flex-1 rounded-md bg-panel border border-border px-3 py-2 text-sm"
               placeholder="+1XXXXXXXXXX"
               value={newTwilioNumber}
               onChange={(e) => setNewTwilioNumber(e.target.value)}
             />
             <button
               type="submit"
-              className="rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2"
+              className="rounded-md bg-brass text-black text-sm font-medium px-4 py-2"
             >
               Save
             </button>
           </form>
         )}
-        {twilioMsg && <p className="text-xs text-zinc-500 mt-2">{twilioMsg}</p>}
-        <p className="text-xs text-zinc-600 mt-2">
+        {twilioMsg && <p className="text-xs text-muted mt-2">{twilioMsg}</p>}
+        <p className="text-xs text-muted/70 mt-2">
           Enter your real Twilio number exactly as it appears in your Twilio console (e.g.
           +14155551234), then set that number's &quot;A call comes in&quot; webhook in Twilio to
           this app&apos;s /api/twilio/voice URL.
         </p>
       </section>
       <section className="mb-10">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">Team</h2>
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted mb-3">Team</h2>
         <div className="space-y-2">
           {members.map((m) => (
             <div
               key={m.id}
-              className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/50 px-4 py-2.5"
+              className="flex items-center justify-between rounded-md border border-border bg-panel px-4 py-2.5"
             >
               <span className="text-sm">{m.full_name ?? "Unnamed"}</span>
               {isAdmin ? (
                 <div className="flex gap-2">
                   <select
-                    className="text-xs rounded bg-zinc-800 border border-zinc-700 px-2 py-1"
+                    className="text-xs rounded bg-panel-raised border border-border px-2 py-1"
                     value={m.role}
                     onChange={(e) => updateMember(m.id, "role", e.target.value)}
                   >
@@ -213,7 +219,7 @@ function AdminPageInner() {
                     ))}
                   </select>
                   <select
-                    className="text-xs rounded bg-zinc-800 border border-zinc-700 px-2 py-1"
+                    className="text-xs rounded bg-panel-raised border border-border px-2 py-1"
                     value={m.clearance}
                     onChange={(e) => updateMember(m.id, "clearance", e.target.value)}
                   >
@@ -225,7 +231,7 @@ function AdminPageInner() {
                   </select>
                 </div>
               ) : (
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-muted">
                   {m.role} · {m.clearance}
                 </span>
               )}
@@ -235,34 +241,34 @@ function AdminPageInner() {
       </section>
 
       {/* Invite */}
-      {isAdmin && (
+      {invitableRoles(currentRole).length > 0 && (
         <section>
-          <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-muted mb-3">
             Invite a teammate
           </h2>
           <form onSubmit={sendInvite} className="space-y-3">
             <input
               type="email"
               required
-              className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2"
+              className="w-full rounded-md bg-panel border border-border px-3 py-2"
               placeholder="teammate@company.com"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
             />
             <div className="flex gap-2">
               <select
-                className="rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm"
+                className="rounded-md bg-panel border border-border px-3 py-2 text-sm"
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}
               >
-                {ROLES.map((r) => (
+                {invitableRoles(currentRole).map((r) => (
                   <option key={r} value={r}>
                     {r}
                   </option>
                 ))}
               </select>
               <select
-                className="rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm"
+                className="rounded-md bg-panel border border-border px-3 py-2 text-sm"
                 value={inviteClearance}
                 onChange={(e) => setInviteClearance(e.target.value)}
               >
@@ -274,16 +280,16 @@ function AdminPageInner() {
               </select>
               <button
                 type="submit"
-                className="rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2"
+                className="rounded-md bg-brass text-black text-sm font-medium px-4 py-2"
               >
                 Invite
               </button>
             </div>
-            {inviteMsg && <p className="text-sm text-zinc-400">{inviteMsg}</p>}
+            {inviteMsg && <p className="text-sm text-muted">{inviteMsg}</p>}
           </form>
         </section>
       )}
-    </main>
+    </div>
   );
 }
 

@@ -162,3 +162,44 @@ AI pattern-learning and real integrations. No mock data, no simulated buttons.
   Vercel project).
 - Supply remaining credentials as environment variables (never commit `.env.local`):
   Twilio Auth Token + phone number, Google OAuth Client Secret.
+
+## Visual redesign + org hierarchy overhaul (post-roadmap)
+After all 11 phases, Anwar flagged the app looked unprofessional ("like a kid's sketch") and
+requested a proper visual identity plus a much more structured account-creation flow. Both done:
+
+**Design system** (grounded in the product's own "institutional memory / legacy" positioning,
+not a generic SaaS look): Ink `#0b0e14` background, Panel `#12161f`, Paper `#e9e6dd` text,
+Brass `#b8934a` as the single sparing accent. Fraunces (serif) for headings, Public Sans for
+body — both self-hosted via `@fontsource` packages (not `next/font/google`), specifically so
+the build never depends on reaching Google's font CDN at build time. Tokens defined as CSS
+variables in `globals.css`, exposed to Tailwind via `tailwind.config.ts`.
+
+**App shell**: `app/dashboard/layout.tsx` + `components/Sidebar.tsx` + `components/TopBar.tsx`
+now wrap every dashboard page with persistent grouped navigation (Overview / Capture /
+Intelligence / Company) and a top bar showing company name, user name, and role — replacing
+the old pattern of every page hand-rolling its own "← Back to dashboard" link and a flat row of
+button-links on the home page. This was the single biggest fix for the "looks broken" feedback.
+Dashboard home (`/dashboard`) is now a real overview with live stat counts (documents, notes,
+decisions, team size) and a getting-started checklist for empty accounts, not a link farm.
+
+**Org hierarchy + account creation** (real structural change, not just cosmetic): expanded
+`profiles.role` and `company_invites.role` to `founder | cto | admin | manager | member`.
+- `founder`: the first person at a brand-new company (not matched by any pending invite).
+  Redirected through a new **`/onboarding/company`** wizard collecting industry, year
+  established, employee count, website, corporate office address, and manufacturing plant
+  address (optional) — this is the real company profile, not just a name.
+- Invite permissions are enforced server-side via a new `can_invite_role()` SECURITY DEFINER
+  function used directly in `company_invites`' RLS insert policy (not just hidden in the UI):
+  founder → cto/admin/manager/member, cto → admin/manager/member, manager → member only.
+  Admin does not invite anyone in this model — matches Anwar's description where admin's role
+  is access/settings management, not recruiting.
+- `is_admin()` (used by the existing Google-connection/Twilio-number/profile-update policies)
+  now means founder OR cto OR admin, since all three sit above manager/member.
+- `/dashboard/admin`'s invite form now only shows roles the current user is actually allowed to
+  invite, computed client-side from the same hierarchy the RLS enforces server-side.
+- Anwar's own existing account was updated from `admin` to `founder` to match (he's the actual
+  founder of his test company; this role didn't exist yet when his account was first created).
+
+**Scope note**: this pass covered the account-creation flow and the shell/navigation
+consistently everywhere; a page-by-page micro-polish pass (spacing, empty states, mobile
+responsiveness) was not the focus and could be a worthwhile follow-up later.

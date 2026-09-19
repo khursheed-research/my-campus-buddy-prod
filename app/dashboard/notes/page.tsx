@@ -17,9 +17,9 @@ type InteractionRow = {
 const DEPARTMENTS = ["sales", "hr", "operations", "finance", "product", "general"];
 
 const sentimentColor: Record<string, string> = {
-  positive: "text-green-400",
-  neutral: "text-zinc-400",
-  negative: "text-red-400",
+  positive: "text-signal-green",
+  neutral: "text-muted",
+  negative: "text-signal-red",
 };
 
 export default function NotesPage() {
@@ -147,19 +147,16 @@ export default function NotesPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl">
-      <a href="/dashboard" className="text-sm text-zinc-500 underline">
-        ← Back to dashboard
-      </a>
+    <div className="p-8 max-w-2xl">
       <h1 className="text-2xl font-semibold mt-4 mb-1">Notes</h1>
-      <p className="text-zinc-500 mb-6">
+      <p className="text-muted mb-6">
         Type or speak what happened. It gets read, summarized, and made searchable automatically.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-3 mb-10">
         <div className="relative">
           <textarea
-            className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 pr-14 min-h-[120px]"
+            className="w-full rounded-md bg-panel border border-border px-3 py-2 pr-14 min-h-[120px]"
             placeholder="What happened? e.g. 'Talked to the vendor about renewal, they want a 10% price increase, need to decide by Friday.' Or just record it instead."
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -174,7 +171,7 @@ export default function NotesPage() {
               "absolute top-2 right-2 w-10 h-10 rounded-full flex items-center justify-center transition-all " +
               (recording
                 ? "bg-red-500 shadow-[0_0_0_4px_rgba(239,68,68,0.3)] animate-pulse"
-                : "bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.25)] hover:shadow-[0_0_0_5px_rgba(245,158,11,0.35)] hover:scale-105")
+                : "bg-brass shadow-[0_0_0_3px_rgba(245,158,11,0.25)] hover:shadow-[0_0_0_5px_rgba(245,158,11,0.35)] hover:scale-105")
             }
           >
             <svg
@@ -194,11 +191,11 @@ export default function NotesPage() {
             </svg>
           </button>
         </div>
-        {recording && <p className="text-xs text-red-400">Recording… click the mic to stop.</p>}
-        {transcribing && <p className="text-xs text-zinc-500">Transcribing your recording…</p>}
+        {recording && <p className="text-xs text-signal-red">Recording… click the mic to stop.</p>}
+        {transcribing && <p className="text-xs text-muted">Transcribing your recording…</p>}
         <div className="flex items-center justify-between gap-3">
           <select
-            className="rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm"
+            className="rounded-md bg-panel border border-border px-3 py-2 text-sm"
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
           >
@@ -211,40 +208,40 @@ export default function NotesPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2 disabled:opacity-50"
+            className="rounded-md bg-brass text-black text-sm font-medium px-4 py-2 disabled:opacity-50"
           >
             {submitting ? "Saving…" : "Save note"}
           </button>
         </div>
-        {errorMsg && <p className="text-red-400 text-sm">{errorMsg}</p>}
+        {errorMsg && <p className="text-signal-red text-sm">{errorMsg}</p>}
       </form>
 
       <div className="space-y-3">
-        {notes.length === 0 && <p className="text-zinc-600 text-sm">No notes yet.</p>}
+        {notes.length === 0 && <p className="text-muted/70 text-sm">No notes yet.</p>}
         {notes.map((n) => (
-          <div key={n.id} className="rounded-md border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+          <div key={n.id} className="rounded-md border border-border bg-panel px-4 py-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs uppercase tracking-wide text-zinc-500">
+              <span className="text-xs uppercase tracking-wide text-muted">
                 {n.department} · {new Date(n.occurred_at).toLocaleString()}
               </span>
-              <span className="text-xs uppercase tracking-wide text-amber-500">{n.status}</span>
+              <span className="text-xs uppercase tracking-wide text-brass">{n.status}</span>
             </div>
-            <p className="text-sm text-zinc-300 mb-2">{n.raw_content}</p>
+            <p className="text-sm text-paper/90 mb-2">{n.raw_content}</p>
             {n.summary && (
-              <div className="text-sm border-t border-zinc-800 pt-2 mt-2 space-y-1">
+              <div className="text-sm border-t border-border pt-2 mt-2 space-y-1">
                 <p>
-                  <span className="text-zinc-500">Summary: </span>
+                  <span className="text-muted">Summary: </span>
                   {n.summary}
                 </p>
                 {n.sentiment && (
                   <p>
-                    <span className="text-zinc-500">Sentiment: </span>
+                    <span className="text-muted">Sentiment: </span>
                     <span className={sentimentColor[n.sentiment] ?? ""}>{n.sentiment}</span>
                   </p>
                 )}
                 {n.next_step && (
                   <p>
-                    <span className="text-zinc-500">Next step: </span>
+                    <span className="text-muted">Next step: </span>
                     {n.next_step}
                   </p>
                 )}
@@ -253,6 +250,6 @@ export default function NotesPage() {
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

@@ -36,7 +36,7 @@ const SENTIMENT_COLORS: Record<string, string> = {
 const LEAD_STAGES = ["raw", "called", "meeting_done", "proposal_sent", "closed_won", "closed_lost"];
 
 function EmptyState({ label }: { label: string }) {
-  return <p className="text-sm text-zinc-600 py-8 text-center">{label}</p>;
+  return <p className="text-sm text-muted/70 py-8 text-center">{label}</p>;
 }
 
 export default function InsightsPage() {
@@ -132,17 +132,14 @@ export default function InsightsPage() {
   if (!loaded) return null;
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl">
-      <a href="/dashboard" className="text-sm text-zinc-500 underline">
-        ← Back to dashboard
-      </a>
+    <div className="p-8 max-w-2xl">
       <h1 className="text-2xl font-semibold mt-4 mb-1">Insights & Analytics</h1>
-      <p className="text-zinc-500 mb-8">
+      <p className="text-muted mb-8">
         Real numbers from what your company has actually captured — this fills in as usage grows.
       </p>
 
       <section className="mb-10">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted mb-3">
           Activity — last 14 days
         </h2>
         {interactions.length === 0 ? (
@@ -161,7 +158,7 @@ export default function InsightsPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted mb-3">
           Sentiment breakdown
         </h2>
         {sentimentData.length === 0 ? (
@@ -181,7 +178,7 @@ export default function InsightsPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted mb-3">
           Decisions by department
         </h2>
         {deptData.length === 0 ? (
@@ -200,7 +197,7 @@ export default function InsightsPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted mb-3">
           Lead pipeline
         </h2>
         {leads.length === 0 ? (
@@ -219,7 +216,7 @@ export default function InsightsPage() {
       </section>
 
       <section>
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted mb-3">
           Top topics
         </h2>
         {topTopics.length === 0 ? (
@@ -229,14 +226,14 @@ export default function InsightsPage() {
             {topTopics.map(([topic, count]) => (
               <span
                 key={topic}
-                className="text-xs rounded-full border border-zinc-700 text-zinc-300 px-3 py-1"
+                className="text-xs rounded-full border border-border text-paper/90 px-3 py-1"
               >
-                {topic} <span className="text-zinc-500">· {count}</span>
+                {topic} <span className="text-muted">· {count}</span>
               </span>
             ))}
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

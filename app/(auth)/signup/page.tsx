@@ -38,8 +38,8 @@ export default function SignupPage() {
     return (
       <main className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-sm text-center">
-          <h1 className="text-xl font-semibold mb-2">Check your email</h1>
-          <p className="text-zinc-400">
+          <h1 className="font-display text-2xl mb-2">Check your email</h1>
+          <p className="text-muted">
             We sent a verification link to {email}. Click it to activate your account.
           </p>
         </div>
@@ -50,24 +50,27 @@ export default function SignupPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <form onSubmit={handleSignup} className="w-full max-w-sm space-y-4">
-        <h1 className="text-xl font-semibold">Create your account</h1>
+        <div>
+          <p className="font-display text-lg text-brass-bright mb-6">My Campus Buddy</p>
+          <h1 className="font-display text-2xl">Create your account</h1>
+        </div>
 
         <input
-          className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2"
+          className="w-full rounded-md bg-panel border border-border px-3 py-2"
           placeholder="Full name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           required
         />
         <input
-          className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2"
+          className="w-full rounded-md bg-panel border border-border px-3 py-2"
           placeholder="Company / organization name"
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
           required
         />
         <input
-          className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2"
+          className="w-full rounded-md bg-panel border border-border px-3 py-2"
           placeholder="Work email"
           type="email"
           value={email}
@@ -75,7 +78,7 @@ export default function SignupPage() {
           required
         />
         <input
-          className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2"
+          className="w-full rounded-md bg-panel border border-border px-3 py-2"
           placeholder="Password"
           type="password"
           minLength={8}
@@ -85,19 +88,19 @@ export default function SignupPage() {
         />
 
         {status === "error" && (
-          <p className="text-red-400 text-sm">{errorMsg}</p>
+          <p className="text-signal-red text-sm">{errorMsg}</p>
         )}
 
         <button
           type="submit"
           disabled={status === "sending"}
-          className="w-full rounded-md bg-amber-500 text-black font-medium py-2 disabled:opacity-50"
+          className="w-full rounded-md bg-brass text-black font-medium py-2 disabled:opacity-50"
         >
           {status === "sending" ? "Creating account…" : "Create account"}
         </button>
 
-        <p className="text-sm text-zinc-500">
-          Already have an account? <a href="/login" className="text-amber-500">Log in</a>
+        <p className="text-sm text-muted">
+          Already have an account? <a href="/login" className="text-brass hover:text-brass-bright">Log in</a>
         </p>
       </form>
     </main>

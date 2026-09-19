@@ -41,18 +41,15 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-2xl flex flex-col">
-      <a href="/dashboard" className="text-sm text-zinc-500 underline">
-        ← Back to dashboard
-      </a>
+    <div className="p-8 max-w-2xl flex flex-col">
       <h1 className="text-2xl font-semibold mt-4 mb-1">AI Workspace</h1>
-      <p className="text-zinc-500 mb-6">
+      <p className="text-muted mb-6">
         Ask questions. Answers only come from what your company has actually uploaded or noted.
       </p>
 
       <div className="flex-1 space-y-4 mb-6">
         {messages.length === 0 && (
-          <p className="text-zinc-600 text-sm">
+          <p className="text-muted/70 text-sm">
             Try asking about something you uploaded or noted earlier.
           </p>
         )}
@@ -61,8 +58,8 @@ export default function ChatPage() {
             <div
               className={
                 m.role === "user"
-                  ? "inline-block rounded-lg bg-amber-500 text-black px-4 py-2 max-w-md text-left"
-                  : "inline-block rounded-lg bg-zinc-900 border border-zinc-800 px-4 py-2 max-w-md text-left"
+                  ? "inline-block rounded-lg bg-brass text-black px-4 py-2 max-w-md text-left"
+                  : "inline-block rounded-lg bg-panel border border-border px-4 py-2 max-w-md text-left"
               }
             >
               <p className="text-sm whitespace-pre-wrap">{m.content}</p>
@@ -70,7 +67,7 @@ export default function ChatPage() {
             {m.sources && m.sources.length > 0 && (
               <div className="mt-1 space-y-1">
                 {m.sources.map((s, j) => (
-                  <p key={j} className="text-xs text-zinc-600">
+                  <p key={j} className="text-xs text-muted/70">
                     {s.type === "document" ? "📄" : "📝"} {s.snippet}…
                   </p>
                 ))}
@@ -78,13 +75,13 @@ export default function ChatPage() {
             )}
           </div>
         ))}
-        {loading && <p className="text-sm text-zinc-500">Thinking…</p>}
-        {errorMsg && <p className="text-sm text-red-400">{errorMsg}</p>}
+        {loading && <p className="text-sm text-muted">Thinking…</p>}
+        {errorMsg && <p className="text-sm text-signal-red">{errorMsg}</p>}
       </div>
 
       <form onSubmit={handleSend} className="flex gap-2 sticky bottom-8">
         <input
-          className="flex-1 rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2"
+          className="flex-1 rounded-md bg-panel border border-border px-3 py-2"
           placeholder="Ask something…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -92,11 +89,11 @@ export default function ChatPage() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2 disabled:opacity-50"
+          className="rounded-md bg-brass text-black text-sm font-medium px-4 py-2 disabled:opacity-50"
         >
           Send
         </button>
       </form>
-    </main>
+    </div>
   );
 }

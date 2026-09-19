@@ -44,118 +44,78 @@ export default async function DashboardPage() {
         clearance: invite.clearance,
       };
     } else {
-      const companyName =
-        (user.user_metadata?.company_name as string | undefined) || "My Organization";
-
-      const { data: company, error: companyError } = await supabase
-        .from("companies")
-        .insert({ name: companyName })
-        .select("id")
-        .single();
-
-      if (companyError) {
-        return (
-          <main className="min-h-screen p-8">
-            <p className="text-red-400">
-              Couldn&apos;t finish setting up your account: {companyError.message}
-            </p>
-            <p className="text-zinc-500 mt-2">
-              Please refresh this page. If this keeps happening, contact support.
-            </p>
-          </main>
-        );
-      }
-
-      if (company) {
-        await supabase
-          .from("profiles")
-          .update({ company_id: company.id, role: "admin", clearance: "executive" })
-          .eq("id", user.id);
-
-        profile = { ...profile, company_id: company.id, role: "admin", clearance: "executive" };
-      }
+      // No invite matched — this person is starting a brand-new company and
+      // becomes its founder. Collect the real company profile first.
+      redirect("/onboarding/company");
     }
   }
 
-  return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-2xl font-semibold mb-1">
-        Welcome, {profile?.full_name || user.email}
-      </h1>
-      <p className="text-zinc-500 mb-8">
-        Role: {profile?.role} · Clearance: {profile?.clearance}
-      </p>
+  const companyId = profile!.company_id;
 
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6 max-w-2xl">
-        <p className="text-zinc-400 mb-4">
-          This is the real application shell — account creation, login, and
-          multi-tenant company setup are live. Real file upload is live too.
-        </p>
-        <a
-          href="/dashboard/upload"
-          className="inline-block rounded-md bg-amber-500 text-black text-sm font-medium px-4 py-2 mr-3"
-        >
-          Upload documents →
-        </a>
-        <a
-          href="/dashboard/notes"
-          className="inline-block rounded-md border border-amber-500 text-amber-500 text-sm font-medium px-4 py-2 mr-3"
-        >
-          Notes →
-        </a>
-        <a
-          href="/dashboard/chat"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
-        >
-          AI Workspace →
-        </a>
-        <a
-          href="/dashboard/timeline"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
-        >
-          Timeline →
-        </a>
-        <a
-          href="/dashboard/decisions"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
-        >
-          Decision Memory →
-        </a>
-        <a
-          href="/dashboard/graph"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
-        >
-          Knowledge Graph →
-        </a>
-        <a
-          href="/dashboard/admin"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
-        >
-          Admin & Access →
-        </a>
-        <a
-          href="/dashboard/insights"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
-        >
-          Insights →
-        </a>
-        <a
-          href="/dashboard/contribution"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 mr-3"
-        >
-          Contribution & Rewards →
-        </a>
-        <a
-          href="/dashboard/strategy"
-          className="inline-block rounded-md border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2"
-        >
-          Strategy Advisor →
-        </a>
+  const [{ count: docCount }, { count: noteCount }, { count: decisionCount }, { count: memberCount }] =
+    await Promise.all([
+      supabase.from("documents").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+      supabase
+        .from("interactions")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId)
+        .eq("type", "note"),
+      supabase
+        .from("interactions")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId)
+        .eq("is_decision", true),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+    ]);
+
+  const stats = [
+    { label: "Documents", value: docCount ?? 0 },
+    { label: "Notes captured", value: noteCount ?? 0 },
+    { label: "Decisions detected", value: decisionCount ?? 0 },
+    { label: "Team members", value: memberCount ?? 0 },
+  ];
+
+  const hasAnyActivity = (docCount ?? 0) > 0 || (noteCount ?? 0) > 0;
+
+  return (
+    <div className="p-8 max-w-4xl">
+      <h1 className="font-display text-3xl mb-1">Welcome, {profile?.full_name || user.email}</h1>
+      <p className="text-muted mb-8">Here&apos;s where things stand right now.</p>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        {stats.map((s) => (
+          <div key={s.label} className="rounded border border-border bg-panel px-5 py-4">
+            <p className="text-3xl font-display text-brass-bright">{s.value}</p>
+            <p className="text-sm text-muted mt-1">{s.label}</p>
+          </div>
+        ))}
       </div>
 
-      <form action="/auth/signout" method="post" className="mt-8">
-        <button className="text-sm text-zinc-500 underline">Log out</button>
-      </form>
-    </main>
+      {!hasAnyActivity && (
+        <div className="rounded border border-border bg-panel px-6 py-5">
+          <h2 className="text-sm font-medium text-paper mb-3">Get started</h2>
+          <ul className="space-y-2 text-sm text-muted">
+            <li>
+              → Upload a document under{" "}
+              <a href="/dashboard/upload" className="text-brass hover:text-brass-bright">
+                Documents
+              </a>
+            </li>
+            <li>
+              → Capture your first note (typed or spoken) under{" "}
+              <a href="/dashboard/notes" className="text-brass hover:text-brass-bright">
+                Notes
+              </a>
+            </li>
+            <li>
+              → Ask a question grounded in what you&apos;ve captured in{" "}
+              <a href="/dashboard/chat" className="text-brass hover:text-brass-bright">
+                AI Workspace
+              </a>
+            </li>
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
