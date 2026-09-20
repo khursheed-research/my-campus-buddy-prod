@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
 
     const { data: doc, error: docError } = await callerClient
       .from("documents")
-      .select("id, company_id, storage_path, file_name, mime_type")
+      .select("id, company_id, storage_path, file_name, mime_type, department")
       .eq("id", document_id)
       .single();
 
@@ -148,6 +148,7 @@ Deno.serve(async (req) => {
       chunk_index: number;
       content: string;
       embedding: number[];
+      department: string;
     }[] = [];
 
     for (let i = 0; i < chunks.length; i += EMBED_BATCH_SIZE) {
@@ -160,6 +161,7 @@ Deno.serve(async (req) => {
           chunk_index: i + j,
           content,
           embedding: embeddings[j],
+          department: doc.department ?? "general",
         });
       });
     }

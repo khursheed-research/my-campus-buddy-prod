@@ -8,6 +8,7 @@ type Interaction = {
   summary: string | null;
   raw_content: string;
   topics: string[];
+  department: string;
   occurred_at: string;
 };
 
@@ -15,6 +16,7 @@ export default function GraphPage() {
   const supabase = createClient();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [department, setDepartment] = useState("all");
 
   useEffect(() => {
     (async () => {
@@ -33,7 +35,7 @@ export default function GraphPage() {
 
       const { data } = await supabase
         .from("interactions")
-        .select("id, summary, raw_content, topics, occurred_at")
+        .select("id, summary, raw_content, topics, department, occurred_at")
         .eq("company_id", profile.company_id)
         .not("topics", "eq", "{}");
 
@@ -42,11 +44,16 @@ export default function GraphPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const filteredInteractions =
+    department === "all" ? interactions : interactions.filter((it) => it.department === department);
+
+  const departments = ["all", ...Array.from(new Set(interactions.map((it) => it.department)))];
+
   const { nodes, edges } = useMemo(() => {
     const freq: Record<string, number> = {};
     const pairWeight: Record<string, number> = {};
 
-    interactions.forEach((it) => {
+    filteredInteractions.forEach((it) => {
       it.topics.forEach((t) => {
         freq[t] = (freq[t] ?? 0) + 1;
       });
@@ -81,18 +88,33 @@ export default function GraphPage() {
     });
 
     return { nodes, edges };
-  }, [interactions]);
+  }, [filteredInteractions]);
 
   const relatedInteractions = selectedTopic
-    ? interactions.filter((it) => it.topics.includes(selectedTopic))
+    ? filteredInteractions.filter((it) => it.topics.includes(selectedTopic))
     : [];
 
   return (
     <div className="p-8 max-w-2xl">
-      <h1 className="text-2xl font-semibold mt-4 mb-1">Knowledge Graph</h1>
-      <p className="text-muted mb-6">
+      <h1 className="font-display text-2xl mt-4 mb-1">Knowledge Graph</h1>
+      <p className="text-muted mb-4">
         How topics from your real notes connect. Bigger dots come up more often; click one to see why.
       </p>
+
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {departments.map((d) => (
+          <button
+            key={d}
+            onClick={() => setDepartment(d)}
+            className={
+              "text-xs px-3 py-1 rounded-full border " +
+              (department === d ? "bg-brass text-ink border-brass" : "border-border text-muted")
+            }
+          >
+            {d}
+          </button>
+        ))}
+      </div>
 
       {nodes.length === 0 ? (
         <p className="text-muted/70 text-sm">

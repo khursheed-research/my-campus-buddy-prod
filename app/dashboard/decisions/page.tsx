@@ -17,6 +17,7 @@ export default function DecisionsPage() {
   const supabase = createClient();
   const [decisions, setDecisions] = useState<Row[]>([]);
   const [search, setSearch] = useState("");
+  const [department, setDepartment] = useState("all");
 
   useEffect(() => {
     (async () => {
@@ -45,7 +46,10 @@ export default function DecisionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const departments = ["all", ...Array.from(new Set(decisions.map((d) => d.department)))];
+
   const filtered = decisions.filter((d) => {
+    if (department !== "all" && d.department !== department) return false;
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
@@ -57,10 +61,27 @@ export default function DecisionsPage() {
 
   return (
     <div className="p-8 max-w-2xl">
-      <h1 className="text-2xl font-semibold mt-4 mb-1">Decision Memory</h1>
-      <p className="text-muted mb-6">
+      <h1 className="font-display text-2xl mt-4 mb-1">Decision Memory</h1>
+      <p className="text-muted mb-4">
         Every real decision automatically detected from your notes, in one searchable place.
       </p>
+
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {departments.map((d) => (
+          <button
+            key={d}
+            onClick={() => setDepartment(d)}
+            className={
+              "text-xs px-3 py-1 rounded-full border " +
+              (department === d
+                ? "bg-brass text-ink border-brass"
+                : "border-border text-muted")
+            }
+          >
+            {d}
+          </button>
+        ))}
+      </div>
 
       <input
         className="w-full rounded-md bg-panel border border-border px-3 py-2 mb-6"

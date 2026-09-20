@@ -6,10 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 type Source = { type: string; id: string; snippet: string; similarity: number };
 type Message = { role: "user" | "assistant"; content: string; sources?: Source[] };
 
+const DEPARTMENTS = ["all", "sales", "hr", "operations", "finance", "product", "general"];
+
 export default function ChatPage() {
   const supabase = createClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [department, setDepartment] = useState("all");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -24,7 +27,7 @@ export default function ChatPage() {
     setErrorMsg("");
 
     const { data, error } = await supabase.functions.invoke("chat", {
-      body: { message: question },
+      body: { message: question, department: department === "all" ? null : department },
     });
 
     if (error) {
@@ -42,10 +45,25 @@ export default function ChatPage() {
 
   return (
     <div className="p-8 max-w-2xl flex flex-col">
-      <h1 className="text-2xl font-semibold mt-4 mb-1">AI Workspace</h1>
-      <p className="text-muted mb-6">
-        Ask questions. Answers only come from what your company has actually uploaded or noted.
-      </p>
+      <div className="flex items-start justify-between mb-6 gap-3">
+        <div>
+          <h1 className="font-display text-2xl mb-1">AI Workspace</h1>
+          <p className="text-muted">
+            Ask questions. Answers only come from what your company has actually uploaded or noted.
+          </p>
+        </div>
+        <select
+          className="rounded bg-panel border border-border px-2 py-1.5 text-xs shrink-0"
+          value={department}
+          onChange={(e) => setDepartment(e.target.value)}
+        >
+          {DEPARTMENTS.map((d) => (
+            <option key={d} value={d}>
+              {d === "all" ? "All departments" : d[0].toUpperCase() + d.slice(1)}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="flex-1 space-y-4 mb-6">
         {messages.length === 0 && (

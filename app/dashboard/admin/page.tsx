@@ -9,6 +9,7 @@ type Member = {
   full_name: string | null;
   role: string;
   clearance: string;
+  manager_id: string | null;
 };
 
 const ROLES = ["founder", "cto", "admin", "manager", "member"];
@@ -40,11 +41,12 @@ function AdminPageInner() {
   const [inviteMsg, setInviteMsg] = useState("");
 
   async function loadAll(cid: string) {
-    const { data: memberRows } = await supabase
-      .from("profiles")
-      .select("id, full_name, role, clearance")
-      .eq("company_id", cid);
-    setMembers(memberRows ?? []);
+    const [{ data: memberRows }, { data: empProfiles }] = await Promise.all([
+      supabase.from("profiles").select("id, full_name, role, clearance").eq("company_id", cid),
+      supabase.from("employee_profiles").select("profile_id, manager_id").eq("company_id", cid),
+    ]);
+    const managerById = Object.fromEntries((empProfiles ?? []).map((e) => [e.profile_id, e.manager_id]));
+    setMembers((memberRows ?? []).map((m) => ({ ...m, manager_id: managerById[m.id] ?? null })));
 
     const { data: conn } = await supabase
       .from("google_connections")
@@ -88,6 +90,15 @@ function AdminPageInner() {
     if (companyId) loadAll(companyId);
   }
 
+  async function updateManager(memberId: string, managerId: string) {
+    if (!companyId) return;
+    await supabase.from("employee_profiles").upsert(
+      { profile_id: memberId, company_id: companyId, manager_id: managerId || null, updated_at: new Date().toISOString() },
+      { onConflict: "profile_id" }
+    );
+    loadAll(companyId);
+  }
+
   async function saveTwilioNumber(e: React.FormEvent) {
     e.preventDefault();
     if (!companyId || !newTwilioNumber.trim()) return;
@@ -124,7 +135,7 @@ function AdminPageInner() {
 
   return (
     <div className="p-8 max-w-2xl">
-      <h1 className="text-2xl font-semibold mt-4 mb-1">Admin & Access</h1>
+      <h1 className="font-display text-2xl mt-4 mb-1">Admin & Access</h1>
       <p className="text-muted mb-6">
         {isAdmin ? "Manage your team and integrations." : "Your team and connected integrations."}
       </p>
@@ -228,6 +239,20 @@ function AdminPageInner() {
                         {c}
                       </option>
                     ))}
+                  </select>
+                  <select
+                    className="text-xs rounded bg-panel-raised border border-border px-2 py-1"
+                    value={m.manager_id ?? ""}
+                    onChange={(e) => updateManager(m.id, e.target.value)}
+                  >
+                    <option value="">No manager</option>
+                    {members
+                      .filter((mm) => mm.id !== m.id)
+                      .map((mm) => (
+                        <option key={mm.id} value={mm.id}>
+                          Reports to: {mm.full_name ?? "Unnamed"}
+                        </option>
+                      ))}
                   </select>
                 </div>
               ) : (

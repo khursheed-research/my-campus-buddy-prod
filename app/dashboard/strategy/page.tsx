@@ -88,7 +88,7 @@ export default function StrategyPage() {
 
   return (
     <div className="p-8 max-w-2xl">
-      <h1 className="text-2xl font-semibold mt-4 mb-1">Strategy Advisor</h1>
+      <h1 className="font-display text-2xl mt-4 mb-1">Strategy Advisor</h1>
       <p className="text-muted mb-6">
         Describe a decision you're facing. Recommendations are grounded in your company's own
         documents and past decisions — and say so plainly when there isn't enough history yet.

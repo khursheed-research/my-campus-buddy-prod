@@ -203,3 +203,33 @@ decisions, team size) and a getting-started checklist for empty accounts, not a 
 **Scope note**: this pass covered the account-creation flow and the shell/navigation
 consistently everywhere; a page-by-page micro-polish pass (spacing, empty states, mobile
 responsiveness) was not the focus and could be a worthwhile follow-up later.
+
+## Five feature requests from Anwar (post-redesign)
+1. **Upload metadata form**: `/dashboard/upload` now shows a two-step flow — pick file, then
+   fill in description, department, data year, and author before it actually uploads. These
+   are real columns on `documents` (`description`, `department`, `document_year`, `author`),
+   denormalized onto `document_chunks` too (`department`) so semantic search can be scoped by
+   department.
+2. **Two-step deletion approval**: any member can "Request deletion"; only an admin-level user
+   (founder/cto/admin) can approve (which actually deletes) or reject. Enforced via three
+   narrow `SECURITY DEFINER` functions (`request_document_deletion`,
+   `approve_document_deletion`, `reject_document_deletion`) rather than a broad UPDATE RLS
+   policy — a broad policy was tried first and caught/reverted because it would have let any
+   member edit any field on any document, not just the deletion status.
+3. **Department/activity filtering**: AI Workspace (chat) has a department dropdown that's
+   passed to the `chat` Edge Function, which switches to `match_document_chunks_filtered` /
+   `match_interactions_filtered` when set. Decision Memory and Knowledge Graph got the same
+   department-pill filter pattern Timeline already had.
+4. **Employee profiles**: new `employee_profiles` table (department, manager, day-to-day
+   activity, previous company, years of experience) with its own RLS — visible only to the
+   employee themselves, their manager, and admin-level roles, deliberately NOT the whole
+   company like the main `profiles` directory. `/dashboard/profile` is self-edit + "My Team"
+   view for managers. Admin & Access got a manager-assignment dropdown per team member.
+   Known simplification: RLS allows self-update of the whole row including `manager_id`, since
+   Postgres RLS can't cleanly restrict column-level updates without triggers — the UI just
+   doesn't expose manager assignment to non-admins, which isn't a hard security boundary. Worth
+   tightening later if it matters.
+5. **Contribution voting**: new `contribution_votes` table, one vote per person per insight, no
+   self-voting (enforced in the `cast_vote` function, not just the UI). `/dashboard/contribution`
+   now has a "This year's score" leaderboard (calendar-year-to-date, includes +2pts per vote
+   received) alongside the existing 6-month AI report, plus a "Recent insights" feed to vote on.

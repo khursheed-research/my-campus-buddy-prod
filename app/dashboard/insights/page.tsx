@@ -133,7 +133,7 @@ export default function InsightsPage() {
 
   return (
     <div className="p-8 max-w-2xl">
-      <h1 className="text-2xl font-semibold mt-4 mb-1">Insights & Analytics</h1>
+      <h1 className="font-display text-2xl mt-4 mb-1">Insights & Analytics</h1>
       <p className="text-muted mb-8">
         Real numbers from what your company has actually captured — this fills in as usage grows.
       </p>

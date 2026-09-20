@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { message } = await req.json();
+    const { message, department } = await req.json();
     if (!message || typeof message !== "string") {
       return new Response(JSON.stringify({ error: "message required" }), {
         status: 400,
@@ -89,10 +89,23 @@ Deno.serve(async (req) => {
 
     const queryEmbedding = await embed(message);
 
-    const [{ data: docChunks }, { data: interactions }] = await Promise.all([
-      callerClient.rpc("match_document_chunks", { query_embedding: queryEmbedding, match_count: 5 }),
-      callerClient.rpc("match_interactions", { query_embedding: queryEmbedding, match_count: 5 }),
-    ]);
+    const [{ data: docChunks }, { data: interactions }] = department
+      ? await Promise.all([
+          callerClient.rpc("match_document_chunks_filtered", {
+            query_embedding: queryEmbedding,
+            match_count: 5,
+            filter_department: department,
+          }),
+          callerClient.rpc("match_interactions_filtered", {
+            query_embedding: queryEmbedding,
+            match_count: 5,
+            filter_department: department,
+          }),
+        ])
+      : await Promise.all([
+          callerClient.rpc("match_document_chunks", { query_embedding: queryEmbedding, match_count: 5 }),
+          callerClient.rpc("match_interactions", { query_embedding: queryEmbedding, match_count: 5 }),
+        ]);
 
     const sources: { type: string; id: string; snippet: string; similarity: number }[] = [];
     const contextParts: string[] = [];
