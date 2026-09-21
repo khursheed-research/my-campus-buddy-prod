@@ -36,6 +36,10 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
 
+  const [linkedinText, setLinkedinText] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const [showLinkedinImport, setShowLinkedinImport] = useState(false);
+
   const [team, setTeam] = useState<TeamMember[]>([]);
 
   useEffect(() => {
@@ -109,6 +113,28 @@ export default function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function parseLinkedin() {
+    if (!linkedinText.trim()) return;
+    setParsing(true);
+
+    const { data, error } = await supabase.functions.invoke("parse-profile-text", {
+      body: { text: linkedinText.trim() },
+    });
+
+    setParsing(false);
+    if (error || data?.error) return;
+
+    if (data.job_title) setJobTitle(data.job_title);
+    if (data.previous_company) setPreviousCompany(data.previous_company);
+    if (data.years_experience) setYearsExperience(String(data.years_experience));
+    if (data.education) setEducation(data.education);
+    if (data.skills?.length) setSkills(data.skills.join(", "));
+    if (data.certifications?.length) setCertifications(data.certifications.join(", "));
+
+    setShowLinkedinImport(false);
+    setLinkedinText("");
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!userId || !companyId) return;
@@ -147,6 +173,46 @@ export default function ProfilePage() {
       <p className="text-muted mb-6">
         Visible only to you, your manager, and admin-level roles — not the whole company.
       </p>
+
+      <div className="mb-6">
+        {!showLinkedinImport ? (
+          <button
+            onClick={() => setShowLinkedinImport(true)}
+            className="text-xs rounded border border-brass/50 text-brass px-3 py-1.5 hover:border-brass"
+          >
+            Import from LinkedIn (paste profile text)
+          </button>
+        ) : (
+          <div className="rounded border border-border bg-panel p-4">
+            <p className="text-xs text-muted mb-2">
+              Go to your LinkedIn profile, copy your About and Experience sections, and paste
+              them here. AI will fill in the fields below for you to review — nothing is saved
+              until you click Save.
+            </p>
+            <textarea
+              className="w-full rounded bg-panel-raised border border-border px-3 py-2 text-sm min-h-[100px] mb-2"
+              placeholder="Paste your LinkedIn About + Experience text here…"
+              value={linkedinText}
+              onChange={(e) => setLinkedinText(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={parseLinkedin}
+                disabled={parsing || !linkedinText.trim()}
+                className="text-xs rounded bg-brass text-ink px-3 py-1.5 disabled:opacity-50"
+              >
+                {parsing ? "Reading…" : "Extract fields"}
+              </button>
+              <button
+                onClick={() => setShowLinkedinImport(false)}
+                className="text-xs text-muted hover:text-paper px-2"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       <form onSubmit={handleSave} className="space-y-4 mb-10">
         <div className="grid grid-cols-2 gap-4">

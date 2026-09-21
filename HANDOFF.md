@@ -275,3 +275,21 @@ too. This pass focused on employee profiles and the new papers feature; a simila
 grounded expansion of the document upload/deletion flows (e.g., versioning, confidentiality
 levels, audit trails — common in real DMS like SharePoint/Documentum) is a reasonable next
 increment, not done in this pass.
+
+## LinkedIn profile import (research-first decision)
+Anwar asked for a "connect LinkedIn, auto-extract everything" feature. Researched this before
+building: LinkedIn's official API does not expose work history/education/skills to third-party
+apps — that access was locked down years ago and now requires LinkedIn's Partner Program
+(enterprise approval, often months, frequently rejected for small companies). The only tools
+that actually pull full profile data (Apify, Proxycurl-style scrapers) do so by violating
+LinkedIn's Terms of Service, which LinkedIn has pursued real legal action over — deliberately
+not built, regardless of preference.
+
+**What was built instead**: a legitimate "paste your LinkedIn text" import on
+`/dashboard/profile`. The employee copies their own About + Experience sections from LinkedIn
+(data they already have full access to) and pastes it in; a new `parse-profile-text` Edge
+Function uses Gemini (instructed to extract ONLY what's explicitly stated, never invent) to
+pre-fill job title, previous company, years of experience, education, skills, and
+certifications. The user still reviews and explicitly saves — nothing is written automatically.
+Verified extraction quality directly before building the UI (correctly parsed a realistic
+sample LinkedIn text end-to-end).
