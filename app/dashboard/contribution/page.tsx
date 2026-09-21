@@ -52,7 +52,7 @@ export default function ContributionPage() {
   async function loadYearlyAndFeed(cid: string, uid: string) {
     const jan1 = new Date(new Date().getFullYear(), 0, 1).toISOString();
 
-    const [{ data: profiles }, { data: interactionsYTD }, { data: documentsYTD }, { data: votesYTD }, { data: recent }] =
+    const [{ data: profiles }, { data: interactionsYTD }, { data: documentsYTD }, { data: votesYTD }, { data: papersYTD }, { data: reviewsYTD }, { data: recent }] =
       await Promise.all([
         supabase.from("profiles").select("id, full_name").eq("company_id", cid),
         supabase.from("interactions").select("id, created_by, is_decision").eq("company_id", cid).gte("occurred_at", jan1),
@@ -62,6 +62,8 @@ export default function ContributionPage() {
           .select("interaction_id, interactions!inner(created_by)")
           .eq("company_id", cid)
           .gte("created_at", jan1),
+        supabase.from("research_papers").select("author_id").eq("company_id", cid).eq("status", "published").gte("published_at", jan1),
+        supabase.from("paper_reviews").select("reviewer_id").eq("company_id", cid).gte("created_at", jan1),
         supabase
           .from("interactions")
           .select("id, summary, raw_content, created_by, occurred_at")
@@ -73,8 +75,8 @@ export default function ContributionPage() {
 
     const nameById = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name ?? "Unnamed"]));
 
-    const scores: Record<string, { notes: number; decisions: number; uploads: number; votes: number }> = {};
-    const ensure = (id: string) => (scores[id] ??= { notes: 0, decisions: 0, uploads: 0, votes: 0 });
+    const scores: Record<string, { notes: number; decisions: number; uploads: number; votes: number; papers: number; reviews: number }> = {};
+    const ensure = (id: string) => (scores[id] ??= { notes: 0, decisions: 0, uploads: 0, votes: 0, papers: 0, reviews: 0 });
 
     (interactionsYTD ?? []).forEach((it) => {
       if (!it.created_by) return;
@@ -90,6 +92,12 @@ export default function ContributionPage() {
       const authorId = v.interactions?.created_by;
       if (authorId) ensure(authorId).votes += 1;
     });
+    (papersYTD ?? []).forEach((p) => {
+      ensure(p.author_id).papers += 1;
+    });
+    (reviewsYTD ?? []).forEach((r) => {
+      ensure(r.reviewer_id).reviews += 1;
+    });
 
     const leaderboard = Object.entries(scores)
       .map(([id, s]) => ({
@@ -97,7 +105,7 @@ export default function ContributionPage() {
         notes: s.notes,
         decisions: s.decisions,
         uploads: s.uploads,
-        score: s.notes * 1 + s.decisions * 3 + s.uploads * 2 + s.votes * 2,
+        score: s.notes * 1 + s.decisions * 3 + s.uploads * 2 + s.votes * 2 + s.papers * 10 + s.reviews * 1,
       }))
       .sort((a, b) => b.score - a.score);
     setYearlyLeaderboard(leaderboard);
@@ -179,7 +187,8 @@ export default function ContributionPage() {
           </div>
         )}
         <p className="text-xs text-muted/70 mt-2">
-          Includes votes received: +2 pts per upvote from a peer, on top of notes/decisions/uploads.
+          1 pt/note · 3 pts/decision · 2 pts/upload · 2 pts/vote received · 10 pts/published paper
+          · 1 pt/peer review given.
         </p>
       </section>
 

@@ -52,21 +52,63 @@ export default async function DashboardPage() {
 
   const companyId = profile!.company_id;
 
-  const [{ count: docCount }, { count: noteCount }, { count: decisionCount }, { count: memberCount }] =
-    await Promise.all([
-      supabase.from("documents").select("id", { count: "exact", head: true }).eq("company_id", companyId),
-      supabase
-        .from("interactions")
-        .select("id", { count: "exact", head: true })
-        .eq("company_id", companyId)
-        .eq("type", "note"),
-      supabase
-        .from("interactions")
-        .select("id", { count: "exact", head: true })
-        .eq("company_id", companyId)
-        .eq("is_decision", true),
-      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("company_id", companyId),
-    ]);
+  const jan1 = new Date(new Date().getFullYear(), 0, 1).toISOString();
+
+  const [
+    { count: docCount },
+    { count: noteCount },
+    { count: decisionCount },
+    { count: memberCount },
+    { count: myNotesYTD },
+    { count: myDecisionsYTD },
+    { count: myUploadsYTD },
+    { data: myVotesYTD },
+  ] = await Promise.all([
+    supabase.from("documents").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+    supabase
+      .from("interactions")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("type", "note"),
+    supabase
+      .from("interactions")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("is_decision", true),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+    supabase
+      .from("interactions")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("created_by", user.id)
+      .gte("occurred_at", jan1),
+    supabase
+      .from("interactions")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("created_by", user.id)
+      .eq("is_decision", true)
+      .gte("occurred_at", jan1),
+    supabase
+      .from("documents")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("uploaded_by", user.id)
+      .gte("created_at", jan1),
+    supabase
+      .from("contribution_votes")
+      .select("id, interactions!inner(created_by)")
+      .eq("company_id", companyId)
+      .gte("created_at", jan1),
+  ]);
+
+  const myVotesReceived = (myVotesYTD ?? []).filter(
+    // @ts-expect-error - joined relation shape
+    (v) => v.interactions?.created_by === user.id
+  ).length;
+
+  const myScore =
+    (myNotesYTD ?? 0) * 1 + (myDecisionsYTD ?? 0) * 3 + (myUploadsYTD ?? 0) * 2 + myVotesReceived * 2;
 
   const stats = [
     { label: "Documents", value: docCount ?? 0 },
@@ -79,6 +121,23 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-8 max-w-4xl">
+      <a
+        href="/dashboard/contribution"
+        className="block rounded border border-brass/40 bg-panel px-6 py-5 mb-8 hover:border-brass transition-colors"
+      >
+        <p className="text-xs uppercase tracking-wide text-muted mb-2">Your contribution this year</p>
+        <div className="flex items-end gap-6">
+          <p className="font-display text-4xl text-brass-bright">{myScore} pts</p>
+          <div className="flex gap-4 text-xs text-muted pb-1">
+            <span>{myNotesYTD ?? 0} notes</span>
+            <span>{myDecisionsYTD ?? 0} decisions</span>
+            <span>{myUploadsYTD ?? 0} uploads</span>
+            <span>{myVotesReceived} votes received</span>
+          </div>
+        </div>
+        <p className="text-xs text-brass mt-2">View full leaderboard & vote on insights →</p>
+      </a>
+
       <h1 className="font-display text-3xl mb-1">Welcome, {profile?.full_name || user.email}</h1>
       <p className="text-muted mb-8">Here&apos;s where things stand right now.</p>
 

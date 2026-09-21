@@ -233,3 +233,45 @@ responsiveness) was not the focus and could be a worthwhile follow-up later.
    self-voting (enforced in the `cast_vote` function, not just the UI). `/dashboard/contribution`
    now has a "This year's score" leaderboard (calendar-year-to-date, includes +2pts per vote
    received) alongside the existing 6-month AI report, plus a "Recent insights" feed to vote on.
+
+## Research-grounded expansion + research papers feature (post-features)
+Anwar pushed back on treating his feature lists as literal specs rather than starting points —
+going forward, the standing approach is: research what real enterprise systems actually do,
+then build to that standard, using his examples as a reference point, not a ceiling.
+
+**Employee profiles expanded** (grounded in real HRIS patterns — Workday/SAP SuccessFactors/
+BambooHR): added `employee_id`, `date_of_joining`, `employment_type`, `job_title`,
+`work_location`, `skills` (array), `education`, `certifications` (array) to
+`employee_profiles`, alongside the original day-to-day/previous-company/years-experience/
+manager fields. Same restricted visibility (self + manager + admin-level) as before.
+
+**Research Papers + peer review** (new feature, `/dashboard/papers`): a real structured
+internal-publishing system — Title/Abstract/Introduction/Methodology/Findings/Conclusion/
+References, matching how serious internal-publishing programs actually work. Lifecycle:
+`draft` (author-only) → `submitted` (open to company-wide peer commentary via `paper_reviews`)
+→ `published` (admin-level approval required — the "standard and protocol" gate Anwar asked
+for) or `rejected`. Publishing embeds the paper's real content
+(`publish-paper` Edge Function, same Gemini embedding pattern as documents/interactions) so
+published papers become genuinely searchable — `chat` now retrieves from `match_papers`
+alongside documents and notes. Status transitions use narrow `SECURITY DEFINER` functions
+(`submit_paper`, `publish_paper`, `reject_paper`), same lesson as the document-deletion
+approval flow — never a broad UPDATE policy.
+
+**Contribution repositioned as requested**: moved to the top of the sidebar (Overview group,
+not buried under Company), and the dashboard home page now shows "Your contribution this year"
+as the very first thing rendered — before the welcome header — linking through to the full
+leaderboard. Scoring now also includes published papers (+10 pts) and peer reviews given
+(+1 pt), on top of the existing notes/decisions/uploads/votes.
+
+**Visual**: added `lucide-react` for real icons throughout the sidebar (previously plain text
+links — a real contributor to the "unprofessional" feedback), and an initials avatar in the
+top bar. Anwar's "looks like SAP/Microsoft/Cisco" bar is a high standard; this pass narrows the
+gap (icons, avatar, denser information architecture on the dashboard home) but a full
+enterprise-grade visual maturity pass (data tables, breadcrumbs, richer empty states) is a
+reasonable next follow-up, not fully closed here.
+
+**Scope note**: the same "research first" principle was requested for document upload/deletion
+too. This pass focused on employee profiles and the new papers feature; a similar research-
+grounded expansion of the document upload/deletion flows (e.g., versioning, confidentiality
+levels, audit trails — common in real DMS like SharePoint/Documentum) is a reasonable next
+increment, not done in this pass.

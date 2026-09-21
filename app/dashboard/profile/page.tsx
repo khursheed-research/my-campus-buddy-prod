@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type TeamMember = {
   profile_id: string;
+  job_title: string | null;
   department: string | null;
   day_to_day_activity: string | null;
   previous_company: string | null;
@@ -12,16 +13,26 @@ type TeamMember = {
   full_name: string;
 };
 
+const EMPLOYMENT_TYPES = ["full-time", "part-time", "contract", "intern"];
+
 export default function ProfilePage() {
   const supabase = createClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [managerName, setManagerName] = useState<string | null>(null);
 
+  const [employeeId, setEmployeeId] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
   const [department, setDepartment] = useState("");
+  const [dateOfJoining, setDateOfJoining] = useState("");
+  const [employmentType, setEmploymentType] = useState("full-time");
+  const [workLocation, setWorkLocation] = useState("");
   const [dayToDay, setDayToDay] = useState("");
   const [previousCompany, setPreviousCompany] = useState("");
   const [yearsExperience, setYearsExperience] = useState("");
+  const [education, setEducation] = useState("");
+  const [skills, setSkills] = useState("");
+  const [certifications, setCertifications] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
 
@@ -45,15 +56,25 @@ export default function ProfilePage() {
 
       const { data: myProfile } = await supabase
         .from("employee_profiles")
-        .select("department, day_to_day_activity, previous_company, years_experience, manager_id")
+        .select(
+          "employee_id, job_title, department, date_of_joining, employment_type, work_location, day_to_day_activity, previous_company, years_experience, education, skills, certifications, manager_id"
+        )
         .eq("profile_id", user.id)
         .maybeSingle();
 
       if (myProfile) {
+        setEmployeeId(myProfile.employee_id ?? "");
+        setJobTitle(myProfile.job_title ?? "");
         setDepartment(myProfile.department ?? "");
+        setDateOfJoining(myProfile.date_of_joining ?? "");
+        setEmploymentType(myProfile.employment_type ?? "full-time");
+        setWorkLocation(myProfile.work_location ?? "");
         setDayToDay(myProfile.day_to_day_activity ?? "");
         setPreviousCompany(myProfile.previous_company ?? "");
         setYearsExperience(myProfile.years_experience?.toString() ?? "");
+        setEducation(myProfile.education ?? "");
+        setSkills((myProfile.skills ?? []).join(", "));
+        setCertifications((myProfile.certifications ?? []).join(", "));
 
         if (myProfile.manager_id) {
           const { data: manager } = await supabase
@@ -65,15 +86,17 @@ export default function ProfilePage() {
         }
       }
 
-      // Direct reports: RLS allows seeing employee_profiles where you're the manager.
       const { data: reports } = await supabase
         .from("employee_profiles")
-        .select("profile_id, department, day_to_day_activity, previous_company, years_experience, profiles(full_name)")
+        .select(
+          "profile_id, job_title, department, day_to_day_activity, previous_company, years_experience, profiles(full_name)"
+        )
         .eq("manager_id", user.id);
 
       setTeam(
         (reports ?? []).map((r) => ({
           profile_id: r.profile_id,
+          job_title: r.job_title,
           department: r.department,
           day_to_day_activity: r.day_to_day_activity,
           previous_company: r.previous_company,
@@ -97,10 +120,18 @@ export default function ProfilePage() {
       {
         profile_id: userId,
         company_id: companyId,
+        employee_id: employeeId.trim() || null,
+        job_title: jobTitle.trim() || null,
         department: department.trim() || null,
+        date_of_joining: dateOfJoining || null,
+        employment_type: employmentType || null,
+        work_location: workLocation.trim() || null,
         day_to_day_activity: dayToDay.trim() || null,
         previous_company: previousCompany.trim() || null,
         years_experience: yearsExperience ? parseFloat(yearsExperience) : null,
+        education: education.trim() || null,
+        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        certifications: certifications.split(",").map((c) => c.trim()).filter(Boolean),
         updated_at: new Date().toISOString(),
       },
       { onConflict: "profile_id" }
@@ -118,13 +149,69 @@ export default function ProfilePage() {
       </p>
 
       <form onSubmit={handleSave} className="space-y-4 mb-10">
-        <div>
-          <label className="block text-xs text-muted mb-1">Department</label>
-          <input
-            className="w-full rounded bg-panel border border-border px-3 py-2 text-sm"
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-muted mb-1">Employee ID</label>
+            <input
+              className="w-full rounded bg-panel border border-border px-3 py-2 text-sm"
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-muted mb-1">Job title</label>
+            <input
+              className="w-full rounded bg-panel border border-border px-3 py-2 text-sm"
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="e.g. Senior Sales Executive"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-muted mb-1">Department</label>
+            <input
+              className="w-full rounded bg-panel border border-border px-3 py-2 text-sm"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-muted mb-1">Work location</label>
+            <input
+              className="w-full rounded bg-panel border border-border px-3 py-2 text-sm"
+              value={workLocation}
+              onChange={(e) => setWorkLocation(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-muted mb-1">Date of joining</label>
+            <input
+              type="date"
+              className="w-full rounded bg-panel border border-border px-3 py-2 text-sm"
+              value={dateOfJoining}
+              onChange={(e) => setDateOfJoining(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-muted mb-1">Employment type</label>
+            <select
+              className="w-full rounded bg-panel border border-border px-3 py-2 text-sm"
+              value={employmentType}
+              onChange={(e) => setEmploymentType(e.target.value)}
+            >
+              {EMPLOYMENT_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {managerName && (
@@ -165,10 +252,38 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        <div>
+          <label className="block text-xs text-muted mb-1">Education</label>
+          <input
+            className="w-full rounded bg-panel border border-border px-3 py-2 text-sm"
+            value={education}
+            onChange={(e) => setEducation(e.target.value)}
+            placeholder="e.g. B.Tech Chemical Engineering, IIT Delhi"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs text-muted mb-1">Skills (comma-separated)</label>
+          <input
+            className="w-full rounded bg-panel border border-border px-3 py-2 text-sm"
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs text-muted mb-1">Certifications (comma-separated)</label>
+          <input
+            className="w-full rounded bg-panel border border-border px-3 py-2 text-sm"
+            value={certifications}
+            onChange={(e) => setCertifications(e.target.value)}
+          />
+        </div>
+
         <button
           type="submit"
           disabled={saving}
-          className="rounded bg-brass text-ink text-sm font-medium px-4 py-2 disabled:opacity-50"
+          className="rounded bg-brass text-ink text-sm font-medium py-2 px-4 disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save"}
         </button>
@@ -183,7 +298,9 @@ export default function ProfilePage() {
           <div className="space-y-3">
             {team.map((m) => (
               <div key={m.profile_id} className="rounded-md border border-border bg-panel px-4 py-3">
-                <p className="text-sm text-paper mb-1">{m.full_name}</p>
+                <p className="text-sm text-paper mb-1">
+                  {m.full_name} {m.job_title ? `— ${m.job_title}` : ""}
+                </p>
                 <p className="text-xs text-muted">
                   {m.department ?? "No department set"}
                   {m.years_experience ? ` · ${m.years_experience} yrs experience` : ""}

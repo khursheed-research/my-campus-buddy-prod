@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
 
     const queryEmbedding = await embed(message);
 
-    const [{ data: docChunks }, { data: interactions }] = department
+    const [{ data: docChunks }, { data: interactions }, { data: papers }] = department
       ? await Promise.all([
           callerClient.rpc("match_document_chunks_filtered", {
             query_embedding: queryEmbedding,
@@ -101,10 +101,12 @@ Deno.serve(async (req) => {
             match_count: 5,
             filter_department: department,
           }),
+          callerClient.rpc("match_papers", { query_embedding: queryEmbedding, match_count: 3 }),
         ])
       : await Promise.all([
           callerClient.rpc("match_document_chunks", { query_embedding: queryEmbedding, match_count: 5 }),
           callerClient.rpc("match_interactions", { query_embedding: queryEmbedding, match_count: 5 }),
+          callerClient.rpc("match_papers", { query_embedding: queryEmbedding, match_count: 3 }),
         ]);
 
     const sources: { type: string; id: string; snippet: string; similarity: number }[] = [];
@@ -128,6 +130,12 @@ Deno.serve(async (req) => {
         });
       }
     );
+
+    (papers ?? []).forEach((p: { id: string; title: string; abstract: string; similarity: number }) => {
+      if (p.similarity < 0.3) return;
+      contextParts.push(`[Published paper: ${p.title}]\n${p.abstract}`);
+      sources.push({ type: "paper", id: p.id, snippet: p.title, similarity: p.similarity });
+    });
 
     const context = contextParts.join("\n\n");
     const answer = await generateAnswer(message, context, contextParts.length > 0);

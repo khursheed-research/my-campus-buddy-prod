@@ -86,7 +86,7 @@ export default function ChatPage() {
               <div className="mt-1 space-y-1">
                 {m.sources.map((s, j) => (
                   <p key={j} className="text-xs text-muted/70">
-                    {s.type === "document" ? "📄" : "📝"} {s.snippet}…
+                    {s.type === "document" ? "📄" : s.type === "paper" ? "📚" : "📝"} {s.snippet}…
                   </p>
                 ))}
               </div>
