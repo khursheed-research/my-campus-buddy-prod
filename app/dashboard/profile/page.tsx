@@ -39,6 +39,8 @@ export default function ProfilePage() {
   const [linkedinText, setLinkedinText] = useState("");
   const [parsing, setParsing] = useState(false);
   const [showLinkedinImport, setShowLinkedinImport] = useState(false);
+  const [importMode, setImportMode] = useState<"pdf" | "paste">("pdf");
+  const [importError, setImportError] = useState("");
 
   const [team, setTeam] = useState<TeamMember[]>([]);
 
@@ -113,26 +115,57 @@ export default function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function parseLinkedin() {
-    if (!linkedinText.trim()) return;
-    setParsing(true);
-
-    const { data, error } = await supabase.functions.invoke("parse-profile-text", {
-      body: { text: linkedinText.trim() },
-    });
-
-    setParsing(false);
-    if (error || data?.error) return;
-
+  function applyExtracted(data: {
+    job_title?: string;
+    previous_company?: string;
+    years_experience?: number;
+    education?: string;
+    skills?: string[];
+    certifications?: string[];
+  }) {
     if (data.job_title) setJobTitle(data.job_title);
     if (data.previous_company) setPreviousCompany(data.previous_company);
     if (data.years_experience) setYearsExperience(String(data.years_experience));
     if (data.education) setEducation(data.education);
     if (data.skills?.length) setSkills(data.skills.join(", "));
     if (data.certifications?.length) setCertifications(data.certifications.join(", "));
-
     setShowLinkedinImport(false);
     setLinkedinText("");
+  }
+
+  async function parseLinkedin() {
+    if (!linkedinText.trim()) return;
+    setParsing(true);
+    setImportError("");
+
+    const { data, error } = await supabase.functions.invoke("parse-profile-text", {
+      body: { text: linkedinText.trim() },
+    });
+
+    setParsing(false);
+    if (error || data?.error) {
+      setImportError(error?.message ?? data?.error ?? "Could not read that text");
+      return;
+    }
+    applyExtracted(data);
+  }
+
+  async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setParsing(true);
+    setImportError("");
+
+    const { data, error } = await supabase.functions.invoke("parse-profile-pdf", { body: file });
+
+    setParsing(false);
+    e.target.value = "";
+    if (error || data?.error) {
+      setImportError(error?.message ?? data?.error ?? "Could not read that PDF");
+      return;
+    }
+    applyExtracted(data);
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -180,36 +213,79 @@ export default function ProfilePage() {
             onClick={() => setShowLinkedinImport(true)}
             className="text-xs rounded border border-brass/50 text-brass px-3 py-1.5 hover:border-brass"
           >
-            Import from LinkedIn (paste profile text)
+            Import from LinkedIn
           </button>
         ) : (
           <div className="rounded border border-border bg-panel p-4">
-            <p className="text-xs text-muted mb-2">
-              Go to your LinkedIn profile, copy your About and Experience sections, and paste
-              them here. AI will fill in the fields below for you to review — nothing is saved
-              until you click Save.
-            </p>
-            <textarea
-              className="w-full rounded bg-panel-raised border border-border px-3 py-2 text-sm min-h-[100px] mb-2"
-              placeholder="Paste your LinkedIn About + Experience text here…"
-              value={linkedinText}
-              onChange={(e) => setLinkedinText(e.target.value)}
-            />
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-3">
               <button
-                onClick={parseLinkedin}
-                disabled={parsing || !linkedinText.trim()}
-                className="text-xs rounded bg-brass text-ink px-3 py-1.5 disabled:opacity-50"
+                onClick={() => setImportMode("pdf")}
+                className={
+                  "text-xs px-3 py-1 rounded-full border " +
+                  (importMode === "pdf" ? "bg-brass text-ink border-brass" : "border-border text-muted")
+                }
               >
-                {parsing ? "Reading…" : "Extract fields"}
+                Upload PDF (recommended)
               </button>
               <button
-                onClick={() => setShowLinkedinImport(false)}
-                className="text-xs text-muted hover:text-paper px-2"
+                onClick={() => setImportMode("paste")}
+                className={
+                  "text-xs px-3 py-1 rounded-full border " +
+                  (importMode === "paste" ? "bg-brass text-ink border-brass" : "border-border text-muted")
+                }
               >
-                Cancel
+                Paste text instead
               </button>
             </div>
+
+            {importMode === "pdf" ? (
+              <>
+                <p className="text-xs text-muted mb-3 leading-relaxed">
+                  On LinkedIn, go to your own profile → click <span className="text-paper">More</span>{" "}
+                  (three dots, sometimes labeled <span className="text-paper">Resources</span>) below
+                  your name → select <span className="text-paper">Save to PDF</span>. LinkedIn
+                  downloads a resume-formatted PDF of your profile. Upload that file here — we&apos;ll
+                  read it and fill in the fields below for you to review before saving.
+                </p>
+                <label className="block rounded border border-dashed border-border p-4 text-center cursor-pointer hover:border-brass">
+                  <input type="file" accept="application/pdf" className="hidden" onChange={handlePdfUpload} disabled={parsing} />
+                  <span className="text-xs text-muted">
+                    {parsing ? "Reading…" : "Click to choose your LinkedIn PDF"}
+                  </span>
+                </label>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-muted mb-2">
+                  Copy your About + Experience sections from LinkedIn and paste them here.
+                </p>
+                <textarea
+                  className="w-full rounded bg-panel-raised border border-border px-3 py-2 text-sm min-h-[100px] mb-2"
+                  placeholder="Paste your LinkedIn About + Experience text here…"
+                  value={linkedinText}
+                  onChange={(e) => setLinkedinText(e.target.value)}
+                />
+                <button
+                  onClick={parseLinkedin}
+                  disabled={parsing || !linkedinText.trim()}
+                  className="text-xs rounded bg-brass text-ink px-3 py-1.5 disabled:opacity-50"
+                >
+                  {parsing ? "Reading…" : "Extract fields"}
+                </button>
+              </>
+            )}
+
+            {importError && <p className="text-xs text-signal-red mt-2">{importError}</p>}
+
+            <button
+              onClick={() => {
+                setShowLinkedinImport(false);
+                setImportError("");
+              }}
+              className="text-xs text-muted hover:text-paper px-2 mt-2 block"
+            >
+              Cancel
+            </button>
           </div>
         )}
       </div>

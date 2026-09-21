@@ -293,3 +293,14 @@ pre-fill job title, previous company, years of experience, education, skills, an
 certifications. The user still reviews and explicitly saves — nothing is written automatically.
 Verified extraction quality directly before building the UI (correctly parsed a realistic
 sample LinkedIn text end-to-end).
+
+## LinkedIn PDF import (Anwar's follow-up — better than paste)
+Added a second, better import path on top of the paste-text option: LinkedIn's own official
+"Save to PDF" feature (profile → More/Resources → Save to PDF — verified current menu wording
+against multiple 2026 sources since LinkedIn moves this periodically) exports a resume-
+formatted PDF of the user's own profile. New `parse-profile-pdf` Edge Function extracts the
+PDF's text with `unpdf` (same library `process-document` uses) and runs it through the same
+Gemini extraction as `parse-profile-text`. `/dashboard/profile`'s import UI now offers both
+"Upload PDF" (recommended, shown first, with the exact current LinkedIn steps written out for
+the user) and "Paste text instead". Both paths remain fully legitimate — the user exports/copies
+their own data via LinkedIn's own UI; nothing is scraped or fetched from LinkedIn directly.
