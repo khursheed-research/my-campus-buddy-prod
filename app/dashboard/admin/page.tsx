@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/components/CompanyContext";
 
 type Member = {
   id: string;
@@ -25,10 +26,9 @@ function invitableRoles(currentRole: string): string[] {
 function AdminPageInner() {
   const supabase = createClient();
   const searchParams = useSearchParams();
+  const { companyId, role: currentRole } = useCompany();
+  const isAdmin = ["founder", "cto", "admin"].includes(currentRole ?? "");
 
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [currentRole, setCurrentRole] = useState("");
   const [members, setMembers] = useState<Member[]>([]);
   const [googleConnection, setGoogleConnection] = useState<{ google_email: string } | null>(null);
   const [twilioNumber, setTwilioNumber] = useState<{ phone_number: string; department: string } | null>(null);
@@ -64,26 +64,9 @@ function AdminPageInner() {
   }
 
   useEffect(() => {
-    (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id, role")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.company_id) return;
-      setCompanyId(profile.company_id);
-      setIsAdmin(["founder", "cto", "admin"].includes(profile.role));
-      setCurrentRole(profile.role);
-      loadAll(profile.company_id);
-    })();
+    if (companyId) loadAll(companyId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [companyId]);
 
   async function updateMember(id: string, field: "role" | "clearance", value: string) {
     await supabase.from("profiles").update({ [field]: value }).eq("id", id);
@@ -266,7 +249,7 @@ function AdminPageInner() {
       </section>
 
       {/* Invite */}
-      {invitableRoles(currentRole).length > 0 && (
+      {invitableRoles(currentRole ?? "").length > 0 && (
         <section>
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted mb-3">
             Invite a teammate
@@ -286,7 +269,7 @@ function AdminPageInner() {
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}
               >
-                {invitableRoles(currentRole).map((r) => (
+                {invitableRoles(currentRole ?? "").map((r) => (
                   <option key={r} value={r}>
                     {r}
                   </option>

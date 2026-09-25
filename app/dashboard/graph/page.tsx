@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/components/CompanyContext";
 
 type Interaction = {
   id: string;
@@ -14,35 +15,25 @@ type Interaction = {
 
 export default function GraphPage() {
   const supabase = createClient();
+  const { companyId } = useCompany();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [department, setDepartment] = useState("all");
 
   useEffect(() => {
     (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.company_id) return;
+      if (!companyId) return;
 
       const { data } = await supabase
         .from("interactions")
         .select("id, summary, raw_content, topics, department, occurred_at")
-        .eq("company_id", profile.company_id)
+        .eq("company_id", companyId)
         .not("topics", "eq", "{}");
 
       setInteractions(data ?? []);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [companyId]);
 
   const filteredInteractions =
     department === "all" ? interactions : interactions.filter((it) => it.department === department);

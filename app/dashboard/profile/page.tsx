@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/components/CompanyContext";
 
 type TeamMember = {
   profile_id: string;
@@ -17,8 +18,7 @@ const EMPLOYMENT_TYPES = ["full-time", "part-time", "contract", "intern"];
 
 export default function ProfilePage() {
   const supabase = createClient();
-  const [userId, setUserId] = useState<string | null>(null);
-  const [companyId, setCompanyId] = useState<string | null>(null);
+  const { userId, companyId } = useCompany();
   const [managerName, setManagerName] = useState<string | null>(null);
 
   const [employeeId, setEmployeeId] = useState("");
@@ -45,27 +45,14 @@ export default function ProfilePage() {
   const [team, setTeam] = useState<TeamMember[]>([]);
 
   useEffect(() => {
+    if (!userId || !companyId) return;
     (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id")
-        .eq("id", user.id)
-        .single();
-      if (!profile?.company_id) return;
-      setCompanyId(profile.company_id);
-
       const { data: myProfile } = await supabase
         .from("employee_profiles")
         .select(
           "employee_id, job_title, department, date_of_joining, employment_type, work_location, day_to_day_activity, previous_company, years_experience, education, skills, certifications, manager_id"
         )
-        .eq("profile_id", user.id)
+        .eq("profile_id", userId)
         .maybeSingle();
 
       if (myProfile) {
@@ -97,7 +84,7 @@ export default function ProfilePage() {
         .select(
           "profile_id, job_title, department, day_to_day_activity, previous_company, years_experience, profiles(full_name)"
         )
-        .eq("manager_id", user.id);
+        .eq("manager_id", userId);
 
       setTeam(
         (reports ?? []).map((r) => ({
@@ -113,7 +100,7 @@ export default function ProfilePage() {
       );
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userId, companyId]);
 
   function applyExtracted(data: {
     job_title?: string;

@@ -304,3 +304,29 @@ Gemini extraction as `parse-profile-text`. `/dashboard/profile`'s import UI now 
 "Upload PDF" (recommended, shown first, with the exact current LinkedIn steps written out for
 the user) and "Paste text instead". Both paths remain fully legitimate — the user exports/copies
 their own data via LinkedIn's own UI; nothing is scraped or fetched from LinkedIn directly.
+
+## Performance fix: eliminated redundant auth/profile round-trips (Anwar reported slow loading)
+Root cause found: every one of the 12 client-side dashboard pages independently called
+`supabase.auth.getUser()` (a real network round-trip to Supabase's Auth server to re-verify the
+session — by design, unlike the local/cached `getSession()`) and then ran a *separate* query
+against `profiles` just to get `company_id`/`role`, before even starting to fetch the page's
+own real data. Combined with middleware's own `getUser()` check on every navigation, a single
+click between dashboard pages triggered 4-5 sequential round trips before real content could
+even start loading.
+
+**Fix**: new `components/CompanyContext.tsx` — a client-side React Context
+(`CompanyProvider`/`useCompany()`) that fetches the session + profile (`userId`, `companyId`,
+`role`) exactly ONCE, using `getSession()` (fast, local, no network round trip — safe here
+because middleware has already verified auth server-side before this runs) instead of
+`getUser()`. Mounted once in `app/dashboard/layout.tsx`, wrapping `{children}` — Next.js App
+Router keeps layout state alive across client-side navigations within the same layout, so this
+provider does NOT remount (and does NOT re-fetch) on every dashboard page switch. All 12 pages
+(`upload`, `notes`, `chat` unaffected — it never had this pattern, `timeline`, `decisions`,
+`graph`, `strategy`, `insights`, `contribution`, `admin`, `profile`, `papers`) refactored to
+read `{ userId, companyId, role }` from `useCompany()` instead of their own
+`getUser()` + `profiles` query boilerplate.
+
+Server-side `getUser()` calls (middleware, `TopBar`, `dashboard/page.tsx`,
+`onboarding/company/page.tsx`) were deliberately left unchanged — that's the Supabase-
+recommended secure pattern for server-side auth checks and shouldn't be swapped for
+`getSession()` there.

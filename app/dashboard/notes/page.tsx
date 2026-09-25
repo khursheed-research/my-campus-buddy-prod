@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/components/CompanyContext";
 
 type InteractionRow = {
   id: string;
@@ -24,8 +25,7 @@ const sentimentColor: Record<string, string> = {
 
 export default function NotesPage() {
   const supabase = createClient();
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  const { userId, companyId } = useCompany();
   const [notes, setNotes] = useState<InteractionRow[]>([]);
   const [content, setContent] = useState("");
   const [department, setDepartment] = useState("general");
@@ -47,26 +47,9 @@ export default function NotesPage() {
   }
 
   useEffect(() => {
-    (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.company_id) {
-        setCompanyId(profile.company_id);
-        loadNotes(profile.company_id);
-      }
-    })();
+    if (companyId) loadNotes(companyId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [companyId]);
 
   useEffect(() => {
     if (!companyId) return;

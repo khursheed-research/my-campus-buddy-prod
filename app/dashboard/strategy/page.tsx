@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/components/CompanyContext";
 
 type StrategyRow = {
   id: string;
@@ -13,8 +14,7 @@ type StrategyRow = {
 
 export default function StrategyPage() {
   const supabase = createClient();
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  const { userId, companyId } = useCompany();
   const [strategies, setStrategies] = useState<StrategyRow[]>([]);
   const [situation, setSituation] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -30,26 +30,9 @@ export default function StrategyPage() {
   }
 
   useEffect(() => {
-    (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.company_id) {
-        setCompanyId(profile.company_id);
-        loadStrategies(profile.company_id);
-      }
-    })();
+    if (companyId) loadStrategies(companyId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [companyId]);
 
   useEffect(() => {
     if (!companyId) return;

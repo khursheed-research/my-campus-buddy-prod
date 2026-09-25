@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/components/CompanyContext";
 
 type Row = {
   id: string;
@@ -22,34 +23,24 @@ const sentimentColor: Record<string, string> = {
 
 export default function TimelinePage() {
   const supabase = createClient();
+  const { companyId } = useCompany();
   const [rows, setRows] = useState<Row[]>([]);
   const [department, setDepartment] = useState("all");
 
   useEffect(() => {
     (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.company_id) return;
+      if (!companyId) return;
 
       const { data } = await supabase
         .from("interactions")
         .select("id, type, department, summary, raw_content, sentiment, is_decision, occurred_at")
-        .eq("company_id", profile.company_id)
+        .eq("company_id", companyId)
         .order("occurred_at", { ascending: false });
 
       setRows(data ?? []);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [companyId]);
 
   const departments = ["all", ...Array.from(new Set(rows.map((r) => r.department)))];
   const filtered = department === "all" ? rows : rows.filter((r) => r.department === department);

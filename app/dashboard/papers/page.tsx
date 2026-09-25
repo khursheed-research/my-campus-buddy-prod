@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/components/CompanyContext";
 
 type Paper = {
   id: string;
@@ -28,9 +29,8 @@ const TABS = ["published", "under_review", "my_drafts"] as const;
 
 export default function PapersPage() {
   const supabase = createClient();
-  const [userId, setUserId] = useState<string | null>(null);
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { userId, companyId, role } = useCompany();
+  const isAdmin = ["founder", "cto", "admin"].includes(role ?? "");
   const [papers, setPapers] = useState<Paper[]>([]);
   const [tab, setTab] = useState<(typeof TABS)[number]>("published");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -68,27 +68,9 @@ export default function PapersPage() {
   }
 
   useEffect(() => {
-    (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id, role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.company_id) {
-        setCompanyId(profile.company_id);
-        setIsAdmin(["founder", "cto", "admin"].includes(profile.role));
-        loadPapers(profile.company_id);
-      }
-    })();
+    if (companyId) loadPapers(companyId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [companyId]);
 
   async function loadReviews(paperId: string) {
     const { data } = await supabase

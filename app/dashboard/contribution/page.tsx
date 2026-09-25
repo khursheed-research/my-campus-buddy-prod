@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/components/CompanyContext";
 
 type LeaderRow = { name: string; notes: number; decisions: number; uploads: number; score: number };
 type Stats = {
@@ -27,7 +28,7 @@ const medals = ["🥇", "🥈", "🥉"];
 
 export default function ContributionPage() {
   const supabase = createClient();
-  const [userId, setUserId] = useState<string | null>(null);
+  const { userId, companyId } = useCompany();
   const [report, setReport] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -134,27 +135,14 @@ export default function ContributionPage() {
 
   async function vote(interactionId: string) {
     await supabase.rpc("cast_vote", { target_interaction_id: interactionId });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single();
-    if (profile?.company_id) loadYearlyAndFeed(profile.company_id, user.id);
+    if (companyId && userId) loadYearlyAndFeed(companyId, userId);
   }
 
   useEffect(() => {
     generateReport();
-    (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-      const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single();
-      if (profile?.company_id) loadYearlyAndFeed(profile.company_id, user.id);
-    })();
+    if (companyId && userId) loadYearlyAndFeed(companyId, userId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [companyId, userId]);
 
   return (
     <div className="p-8 max-w-2xl">

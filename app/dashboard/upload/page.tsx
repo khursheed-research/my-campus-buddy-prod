@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/components/CompanyContext";
 
 type DocRow = {
   id: string;
@@ -21,9 +22,8 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 export default function UploadPage() {
   const supabase = createClient();
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { userId, companyId, role } = useCompany();
+  const isAdmin = ["founder", "cto", "admin"].includes(role ?? "");
   const [docs, setDocs] = useState<DocRow[]>([]);
   const [uploading, setUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -46,27 +46,9 @@ export default function UploadPage() {
   }
 
   useEffect(() => {
-    (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id, role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.company_id) {
-        setCompanyId(profile.company_id);
-        setIsAdmin(["founder", "cto", "admin"].includes(profile.role));
-        loadDocs(profile.company_id);
-      }
-    })();
+    if (companyId) loadDocs(companyId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [companyId]);
 
   useEffect(() => {
     if (!companyId) return;

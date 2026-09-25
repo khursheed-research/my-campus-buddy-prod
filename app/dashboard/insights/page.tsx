@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/components/CompanyContext";
 import {
   BarChart,
   Bar,
@@ -41,31 +42,21 @@ function EmptyState({ label }: { label: string }) {
 
 export default function InsightsPage() {
   const supabase = createClient();
+  const { companyId } = useCompany();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.company_id) return;
+      if (!companyId) return;
 
       const [{ data: interactionRows }, { data: leadRows }] = await Promise.all([
         supabase
           .from("interactions")
           .select("occurred_at, department, sentiment, is_decision, topics")
-          .eq("company_id", profile.company_id),
-        supabase.from("leads").select("status").eq("company_id", profile.company_id),
+          .eq("company_id", companyId),
+        supabase.from("leads").select("status").eq("company_id", companyId),
       ]);
 
       setInteractions(interactionRows ?? []);
@@ -73,7 +64,7 @@ export default function InsightsPage() {
       setLoaded(true);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [companyId]);
 
   // Activity over the last 14 days
   const days: { date: string; label: string; count: number }[] = [];

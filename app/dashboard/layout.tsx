@@ -1,5 +1,6 @@
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
+import { CompanyProvider } from "@/components/CompanyContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,7 +8,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <div className="flex-1 min-w-0">
         <TopBar />
-        <main>{children}</main>
+        <main>
+          <CompanyProvider>{children}</CompanyProvider>
+        </main>
       </div>
     </div>
   );
