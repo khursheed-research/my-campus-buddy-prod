@@ -330,3 +330,26 @@ Server-side `getUser()` calls (middleware, `TopBar`, `dashboard/page.tsx`,
 `onboarding/company/page.tsx`) were deliberately left unchanged — that's the Supabase-
 recommended secure pattern for server-side auth checks and shouldn't be swapped for
 `getSession()` there.
+
+## Dashboard home rebuilt (Anwar: "I don't understand a single thing")
+The home page previously showed only a generic welcome message and 4 company-wide stat cards —
+no personal identity, no reporting context, nothing department-specific. Rebuilt from scratch
+as a proper enterprise-style home (identity banner + 2-column layout: main content + side
+panel), grounded in how real dashboards like Salesforce/Workday structure a personalized home:
+
+- **Identity banner** at the top: avatar (initials), name, job title, department, and "Reports
+  to [manager]" — pulled from `employee_profiles`, which existed in the schema since the
+  earlier profile-expansion pass but was never actually surfaced on the dashboard until now.
+- **Main column**: contribution card (kept, still prominent), a real
+  "[Department] — recent activity" panel showing actual recent notes/decisions filtered to the
+  user's own department plus trending topics within it, then company-wide overview stats
+  (demoted below personal/department context, since that's what was missing), then the
+  get-started checklist for empty accounts.
+- **Side panel**: "Reporting line" (manager + direct reports, if any) and "[Department] team"
+  (co-workers in the same department) — real org-context, not just a stat.
+- Department is read from the user's own `employee_profiles.department`; if unset, the panel
+  prompts them to fill in their profile rather than showing empty/confusing sections.
+
+Root cause of the original complaint: the pieces (department, manager, job title) were built
+into the Profile page in an earlier pass but never wired into the actual dashboard home, so the
+disconnect Anwar felt was real and specific, not just a vague "make it nicer" ask.
